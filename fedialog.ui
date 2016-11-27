@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>458</width>
+    <width>473</width>
     <height>341</height>
    </rect>
   </property>
@@ -23,7 +23,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QLabel" name="label_3">
+      <widget class="QLabel" name="labelImage">
        <property name="minimumSize">
         <size>
          <width>161</width>
@@ -47,7 +47,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit">
+          <widget class="QLineEdit" name="lineEditPrompt">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -101,7 +101,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_2">
+        <widget class="QLineEdit" name="lineEditCount">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -127,7 +127,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_3">
+        <widget class="QLineEdit" name="lineEditMax">
          <property name="enabled">
           <bool>false</bool>
          </property>

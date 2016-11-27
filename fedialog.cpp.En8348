@@ -242,19 +242,31 @@ void FEDialog::displayImage(const DATA_BLOB *pImageBlob)
             HDC hdcScreen = GetDC((HWND) widget.winId());
             HDC hdcMem = CreateCompatibleDC(hdcScreen);
 
+//            LPBYTE dstBits = NULL;
+//            HBITMAP hBmp1 = CreateDIBSection(0, pOutBmp, DIB_RGB_COLORS, (void**)&dstBits, 0, 0);
+//            memcpy(dstBits, pBmpBits, pOutBmp->bmiHeader.biSizeImage);
+//            SelectObject(hdcMem, hBmp1);
+//            int k = BitBlt(hdcScreen, 0, 0, pOutBmp->bmiHeader.biWidth, pOutBmp->bmiHeader.biHeight, hdcMem, 0, 0, SRCCOPY);
+
             HBITMAP hBmp = CreateCompatibleBitmap(hdcScreen, ui->labelImage->width(), ui->labelImage->height());
+////            SetRect(&m_rcDrawArea, 0, 0, ui->labelImage->width(), ui->labelImage->height());
             SelectObject(hdcMem, hBmp);
 
 
-            int i = StretchDIBits(hdcMem, 0, 0, widget.width(), widget.height(), 0, 0, pOutBmp->bmiHeader.biWidth, pOutBmp->bmiHeader.biHeight, pBmpBits, pOutBmp, DIB_RGB_COLORS, SRCCOPY);
-            int j = BitBlt(hdcScreen, 0, 0, widget.width(), widget.height(), hdcMem, 0, 0, SRCCOPY);
+            int i = StretchDIBits(hdcMem, 0, 0, ui->labelImage->width(), ui->labelImage->height(), 0, 0, pOutBmp->bmiHeader.biWidth, pOutBmp->bmiHeader.biHeight, pBmpBits, pOutBmp, DIB_RGB_COLORS, SRCCOPY);
+            int j = BitBlt(hdcScreen, 0, 0, ui->labelImage->width(), ui->labelImage->height(), hdcMem, 0, 0, SRCCOPY);
+//            HBITMAP hOldBmp = reinterpret_cast<HBITMAP>(SendDlgItemMessage((HWND)ui->labelImage->winId(), IDC_STATIC_DRAWAREA, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBmp));
+////            if (hOldBmp)
+////                DeleteObject(hOldBmp);
 
             QPixmap pixmap = QtWin::fromHBITMAP(hBmp);
             ui->labelImage->setPixmap(pixmap);
             pixmap.toImage().save("newImage.bmp");
+//            fromHBITMAP
 
             DeleteDC(hdcMem);
-            ReleaseDC((HWND)widget.winId(), hdcScreen);
+            ReleaseDC((HWND)ui->labelImage->winId(), hdcScreen);
+//            InvalidateRect((HWND)ui->labelImage->winId(), NULL, TRUE);
 
         }
         delete [] (PBYTE)pOutBmp;

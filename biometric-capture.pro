@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui winextras
 CONFIG += c++11
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -56,3 +56,8 @@ else:unix: LIBS += -L$$PWD/../build-biometric-capture/ -ldpHMatch
 
 INCLUDEPATH += $$PWD/../build-biometric-capture
 DEPENDPATH += $$PWD/../build-biometric-capture
+
+RESOURCES += \
+    resource.qrc
+
+win32: LIBS += -lgdi32

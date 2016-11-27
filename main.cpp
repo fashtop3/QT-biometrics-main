@@ -5,11 +5,8 @@
 #include "dpFtrEx.h"
 #include "dpMatch.h"
 
-#include <QDebug>
-#include <QFile>
 #include <QMessageBox>
-#include <QProcess>
-#include <QDialog>
+#include <evdialog.h>
 
 
 int main(int argc, char *argv[])
@@ -36,7 +33,8 @@ int main(int argc, char *argv[])
             if(FT_OK == MC_init())              //intialize sdk matching
             {
                 //call exec on evdialog
-
+                EVDialog dialog;
+                dialog.exec();
                 MC_terminate();                 // All MC_init  must be matched with MC_terminate to free up the resources
             }
             else {
@@ -62,5 +60,5 @@ int main(int argc, char *argv[])
     }
 
 
-    return a.exec();
+    return 0;
 }

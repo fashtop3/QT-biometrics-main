@@ -22,10 +22,14 @@ public:
     ~FEDialog();
 
 signals:
-    void FP_templGenerated(DATA_BLOB &rRegTemplate);
+    void onVerificationStart(DATA_BLOB fp_RegTemplate);
 
 public slots:
     void getRegTemplate(DATA_BLOB &rRegTemplate) const;
+    void closeInit();
+
+    void initContext();
+
 protected:
     bool nativeEvent(const QByteArray &eventType, void *message, long *result);
     void displayImage(const DATA_BLOB* pImageBlob);
@@ -35,6 +39,7 @@ protected:
     bool saveTemplate();
     bool saveFile(const QString &fileName);
     bool writeFile(const QString &fileName);
+    void closAcquisitionAndContext();
 private:
     Ui::FEDialog *ui;
     FT_HANDLE   m_fxContext;

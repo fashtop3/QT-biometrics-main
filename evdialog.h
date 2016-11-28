@@ -18,16 +18,17 @@ public:
     ~EVDialog();
 
 private slots:
-    void on_pushButton_clicked();
+    void startVerification(DATA_BLOB fp_RegTemplate);
 
-    void on_pushButton_2_clicked();
-    void FP_templCopy(DATA_BLOB &fp_template);
+    void on_pushButtonEnrollment_clicked();
+
+    void on_pushButtonVerification_clicked();
 
 private:
     Ui::EVDialog *ui;
 
     DATA_BLOB  m_RegTemplate;   // BLOB that keeps Enrollment Template. It is used to pass it from Enrollment to Verification and also for saving/reading from file.
-
+    DATA_BLOB  temp_RegTemplate;
 };
 
 #endif // EVDIALOG_H

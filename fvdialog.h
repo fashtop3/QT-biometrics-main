@@ -22,7 +22,7 @@ public:
     ~FVDialog();
 
 public slots:
-    void LoadRegTemplate(const DATA_BLOB &rRegTemplate);
+    void loadRegTemplate(const DATA_BLOB &rRegTemplate);
 protected:
     bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 

@@ -106,7 +106,7 @@ FVDialog::~FVDialog()
     delete ui;
 }
 
-void FVDialog::LoadRegTemplate(const DATA_BLOB& rRegTemplate) {
+void FVDialog::loadRegTemplate(const DATA_BLOB& rRegTemplate) {
     // Delete the old stuff that may be in the template.
     delete [] m_RegTemplate.pbData;
     m_RegTemplate.pbData = NULL;

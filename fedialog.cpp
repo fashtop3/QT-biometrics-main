@@ -23,32 +23,25 @@
 const GUID GUID_NULL = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
 
 
-FEDialog::FEDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::FEDialog),
-    m_hOperationEnroll(0),
-    m_fxContext(0),
-    m_mcContext(0),
-    m_TemplateArray(NULL),
-    m_nRegFingerprint(0),
-    m_mcRegOptions(FT_DEFAULT_REG),
-    hasReadyTemplate(false)
+void FEDialog::initContext()
 {
-    ui->setupUi(this);
-
     HRESULT hr = S_OK;
 
     try {
         FT_RETCODE rc = FT_OK;
 
+#ifdef QT_DEBUG
         qDebug("Creating FX_ontext");
+#endif
         // Create Context for Feature Extraction
         if (FT_OK != (rc = FX_createContext(&m_fxContext))) {
             QMessageBox::critical(this, "Fingerprint Enrollment", "Cannot create Feature Extraction Context.",
                                   QMessageBox::Close|QMessageBox::Escape);
             throw -1;
         }
+#ifdef QT_DEBUG
         qDebug("FX_context created");
+#endif
 
         // Create Context for Matching
         if (FT_OK != (rc = MC_createContext(&m_mcContext))) {
@@ -57,7 +50,9 @@ FEDialog::FEDialog(QWidget *parent) :
             throw -2;
         }
 
+#ifdef QT_DEBUG
         qDebug("MC_createContext created");
+#endif
 
         // Get number of Pre-Enrollment feature sets needed to create on Enrollment template
         // allocate array that keeps those Pre-Enrollment and set the first index to 0;
@@ -118,13 +113,30 @@ FEDialog::FEDialog(QWidget *parent) :
         QMessageBox::critical(this, "Fingerprint Enrol", "Enrolling error", QMessageBox::Close|QMessageBox::Escape);
         this->close();
     }
-
-    qDebug("Fully initialized");
 }
 
-FEDialog::~FEDialog()
+FEDialog::FEDialog(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::FEDialog),
+    m_hOperationEnroll(0),
+    m_fxContext(0),
+    m_mcContext(0),
+    m_TemplateArray(NULL),
+    m_nRegFingerprint(0),
+    m_mcRegOptions(FT_DEFAULT_REG),
+    hasReadyTemplate(false)
 {
+    ui->setupUi(this);
 
+    initContext();
+
+#ifdef QT_DEBUG
+        qDebug("Fully initialized");
+#endif
+}
+
+void FEDialog::closAcquisitionAndContext()
+{
     if (m_hOperationEnroll) {
         DPFPStopAcquisition(m_hOperationEnroll);    // No error checking - what can we do at the end anyway?
         DPFPDestroyAcquisition(m_hOperationEnroll);
@@ -140,6 +152,32 @@ FEDialog::~FEDialog()
         MC_closeContext(m_mcContext);
         m_mcContext = 0;
     }
+
+}
+
+void FEDialog::closeInit()
+{
+    if (m_hOperationEnroll) {
+        DPFPStopAcquisition(m_hOperationEnroll);    // No error checking - what can we do at the end anyway?
+        DPFPDestroyAcquisition(m_hOperationEnroll);
+        m_hOperationEnroll = 0;
+    }
+
+    if (m_fxContext) {
+        FX_closeContext(m_fxContext);
+        m_fxContext = 0;
+    }
+
+    if (m_mcContext) {
+        MC_closeContext(m_mcContext);
+        m_mcContext = 0;
+    }
+}
+
+FEDialog::~FEDialog()
+{
+
+    closeInit();
 
     if(m_TemplateArray){
         for (int i=0; i<m_NumberOfPreRegFeatures; ++i)
@@ -193,24 +231,34 @@ bool FEDialog::nativeEvent(const QByteArray &eventType, void *message, long *res
             break;
         }
         case WN_RECONNECT: {
-            qDebug("Fingerprint reader connected");
+#ifdef QT_DEBUG
+         qDebug("Fingerprint reader connected");
+#endif
             addStatus("Fingerprint reader connected");
             break;
         }
         case WN_FINGER_TOUCHED:
-            qDebug("Finger touched");
+#ifdef QT_DEBUG
+        qDebug("Finger touched");
+#endif
             addStatus("Finger touched");
             break;
         case WN_FINGER_GONE:
-            qDebug("Finger gone");
+#ifdef QT_DEBUG
+        qDebug("Finger gone");
+#endif
             addStatus("Finger gone");
             break;
         case WN_IMAGE_READY:
-            qDebug("Fingerprint image ready");
+#ifdef QT_DEBUG
+        qDebug("Fingerprint image ready");
+#endif
             addStatus("Fingerprint image ready");
             break;
         case WN_OPERATION_STOPPED:
-            qDebug("Fingerprint Enrollment Operation stopped");
+#ifdef QT_DEBUG
+        qDebug("Fingerprint Enrollment Operation stopped");
+#endif
             break;
     }
 
@@ -258,11 +306,15 @@ void FEDialog::displayImage(const DATA_BLOB *pImageBlob)
     }
     catch(_com_error E) {
         hr = E.Error();
+#ifdef QT_DEBUG
         qDebug("exception found 1");
+#endif
     }
     catch(...) {
         hr = E_UNEXPECTED;
+#ifdef QT_DEBUG
         qDebug("exception found 2");
+#endif
     }
 }
 
@@ -365,8 +417,11 @@ void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageS
 
 //                        addStatus("Enrollment Template generated successfully");
                         ui->plainTextEdit->appendHtml("<font color = \"green\">Enrollment Template generated successfully.</font><br>");
-                        if(saveTemplate())
+                        if(saveTemplate()) {
                             hasReadyTemplate = true;
+//                            emit onVerificationStart(m_RegTemplate);
+//                            this->close();
+                        }
                     }
                     else {
                         QMessageBox::information(this, "Fingerprint Enrollment", "Creation of Enrollment Template Failed.",

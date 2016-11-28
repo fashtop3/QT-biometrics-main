@@ -155,9 +155,9 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="pushButtonNext">
        <property name="text">
-        <string>Close</string>
+        <string>Next &gt;&gt;</string>
        </property>
       </widget>
      </item>
@@ -166,5 +166,22 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pushButtonNext</sender>
+   <signal>clicked()</signal>
+   <receiver>FEDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>396</x>
+     <y>319</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>338</x>
+     <y>311</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

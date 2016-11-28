@@ -5,7 +5,6 @@
 #include "dpDefs.h"
 #include "dpRCodes.h"
 #include "DPDevClt.h"
-//#include <qwinfunctions.h>
 
 
 namespace Ui {
@@ -15,8 +14,6 @@ class FEDialog;
 class FEDialog : public QDialog
 {
     Q_OBJECT
-//    Q_GUI_EXPORT QPixmap qt_pixmapFromWinHBITMAP(HBITMAP bitmap, int hbitmapFormat=0);
-//    QPixmap Q_WINEXTRAS_EXPORT fromHBITMAP(HBITMAP bitmap, int hbitmapFormat=0);
 
     enum { WMUS_FP_NOTIFY = WM_USER+1 };
 
@@ -24,13 +21,18 @@ public:
     explicit FEDialog(QWidget *parent = 0);
     ~FEDialog();
 
+signals:
+    void FP_templGenerated(DATA_BLOB &rRegTemplate);
+
+public slots:
+    void getRegTemplate(DATA_BLOB &rRegTemplate) const;
 protected:
     bool nativeEvent(const QByteArray &eventType, void *message, long *result);
     void displayImage(const DATA_BLOB* pImageBlob);
     void addStatus(QString status);
 
     void addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize);
-    LRESULT saveTemplate();
+    bool saveTemplate();
     bool saveFile(const QString &fileName);
     bool writeFile(const QString &fileName);
 private:
@@ -46,6 +48,8 @@ private:
     DATA_BLOB      m_RegTemplate;            // BLOB that keeps Enrollment Template.
     QString curFile;
     enum { MagicNumber = 0x7F51C883};
+    QWidget h_bmpWidget;
+    bool hasReadyTemplate;
 };
 
 #endif // FEDIALOG_H

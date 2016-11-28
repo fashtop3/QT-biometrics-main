@@ -3,7 +3,6 @@
 #include <minwinbase.h>
 #include <QMessageBox>
 #include <QFileDialog>
-#include <QBitmap>
 #include <QScrollBar>
 #include <comdef.h>
 #include <stdio.h>
@@ -18,6 +17,7 @@
 
 #include <QBuffer>
 #include <iostream>
+#include "fvdialog.h"
 #include "resource.h"
 
 const GUID GUID_NULL = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
@@ -31,7 +31,8 @@ FEDialog::FEDialog(QWidget *parent) :
     m_mcContext(0),
     m_TemplateArray(NULL),
     m_nRegFingerprint(0),
-    m_mcRegOptions(FT_DEFAULT_REG)
+    m_mcRegOptions(FT_DEFAULT_REG),
+    hasReadyTemplate(false)
 {
     ui->setupUi(this);
 
@@ -123,9 +124,6 @@ FEDialog::FEDialog(QWidget *parent) :
 
 FEDialog::~FEDialog()
 {
-    delete [] m_RegTemplate.pbData;
-    m_RegTemplate.cbData = 0;
-    m_RegTemplate.pbData = NULL;
 
     if (m_hOperationEnroll) {
         DPFPStopAcquisition(m_hOperationEnroll);    // No error checking - what can we do at the end anyway?
@@ -152,6 +150,10 @@ FEDialog::~FEDialog()
     }
 
     delete ui;
+
+    delete [] m_RegTemplate.pbData;
+    m_RegTemplate.cbData = 0;
+    m_RegTemplate.pbData = NULL;
 }
 
 bool FEDialog::nativeEvent(const QByteArray &eventType, void *message, long *result)
@@ -167,11 +169,6 @@ bool FEDialog::nativeEvent(const QByteArray &eventType, void *message, long *res
 #ifdef QT_DEBUG
         qDebug("Fingerprint image captured");
 #endif
-            addStatus("Fingerprint image captured");
-//            std::cout << " lParam: " << msg->lParam
-//                      << "  Message: " << msg->message
-//                      << "  wParam: " << msg->wParam << std::endl;
-
             DATA_BLOB* pImageBlob = reinterpret_cast<DATA_BLOB*>(msg->lParam);
 
             // Display fingerprint image
@@ -183,7 +180,7 @@ bool FEDialog::nativeEvent(const QByteArray &eventType, void *message, long *res
         }
         case WN_ERROR: {
             char buffer[101] = {0};
-            snprintf(buffer, 100, "Error happened. Error code: 0x%X", result);
+            snprintf(buffer, 100, "Error happened. Error code: 0x%X", msg->lParam);
 #ifdef QT_DEBUG
             qDebug(buffer);
 #endif
@@ -237,24 +234,24 @@ void FEDialog::displayImage(const DATA_BLOB *pImageBlob)
             const BYTE* pBmpBits = (PBYTE)pOutBmp + sizeof(BITMAPINFOHEADER) + dwColorsSize;
 
             // Create bitmap and set its handle to the control for display.
-            QWidget widget;
-            widget.resize(ui->labelImage->size());
-            HDC hdcScreen = GetDC((HWND) widget.winId());
+
+            h_bmpWidget.resize(ui->labelImage->size());
+            HDC hdcScreen = GetDC((HWND) h_bmpWidget.winId());
             HDC hdcMem = CreateCompatibleDC(hdcScreen);
 
             HBITMAP hBmp = CreateCompatibleBitmap(hdcScreen, ui->labelImage->width(), ui->labelImage->height());
             SelectObject(hdcMem, hBmp);
 
 
-            int i = StretchDIBits(hdcMem, 0, 0, widget.width(), widget.height(), 0, 0, pOutBmp->bmiHeader.biWidth, pOutBmp->bmiHeader.biHeight, pBmpBits, pOutBmp, DIB_RGB_COLORS, SRCCOPY);
-            int j = BitBlt(hdcScreen, 0, 0, widget.width(), widget.height(), hdcMem, 0, 0, SRCCOPY);
+            int i = StretchDIBits(hdcMem, 0, 0, h_bmpWidget.width(), h_bmpWidget.height(), 0, 0, pOutBmp->bmiHeader.biWidth, pOutBmp->bmiHeader.biHeight, pBmpBits, pOutBmp, DIB_RGB_COLORS, SRCCOPY);
+            int j = BitBlt(hdcScreen, 0, 0, h_bmpWidget.width(), h_bmpWidget.height(), hdcMem, 0, 0, SRCCOPY);
 
             QPixmap pixmap = QtWin::fromHBITMAP(hBmp);
             ui->labelImage->setPixmap(pixmap);
             pixmap.toImage().save("newImage.bmp");
 
             DeleteDC(hdcMem);
-            ReleaseDC((HWND)widget.winId(), hdcScreen);
+            ReleaseDC((HWND)h_bmpWidget.winId(), hdcScreen);
 
         }
         delete [] (PBYTE)pOutBmp;
@@ -366,8 +363,10 @@ void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageS
 
                         pRegTemplate = NULL;   // This prevents deleting at the end of the function
 
-                        addStatus("Enrollment Template generated successfully");
-                        saveTemplate();
+//                        addStatus("Enrollment Template generated successfully");
+                        ui->plainTextEdit->appendHtml("<font color = \"green\">Enrollment Template generated successfully.</font><br>");
+                        if(saveTemplate())
+                            hasReadyTemplate = true;
                     }
                     else {
                         QMessageBox::information(this, "Fingerprint Enrollment", "Creation of Enrollment Template Failed.",
@@ -409,7 +408,7 @@ void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageS
 
 // This function simply saves BLOB of the Enrollment template created previously in to
 // user-specified file.
-LRESULT FEDialog::saveTemplate()
+bool FEDialog::saveTemplate()
 {
     if (m_RegTemplate.cbData == 0 || m_RegTemplate.pbData == NULL) {
         QMessageBox::information(this, "Save Fingerprint Template", "Before attempting to save a template, select \"Fingerprint Enrollment\" to create a Fingerprint Enrollment Template or select \"Read Fingerprint Enrollment Template\" to read a template.",
@@ -417,51 +416,15 @@ LRESULT FEDialog::saveTemplate()
         return false;
     }
 
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Template"), ".", tr("Fingerprint Templates (*.fpt)"));
+    if (fileName.isEmpty()) {
+        QMessageBox::critical(this, "Save Fingerprint Template", "Invalid filename", QMessageBox::Close);
+        return false;
+    }
 
-//    HRESULT hr = S_OK;
-//    try {
+    if(!saveFile(fileName))
+        return 0;
 
-
-        QString fileName = QFileDialog::getSaveFileName(this, tr("Save Template"), ".", tr("Fingerprint Templates (*.fpt)"));
-        if (fileName.isEmpty()) {
-            QMessageBox::critical(this, "Save Fingerprint Template", "Invalid filename", QMessageBox::Close);
-            return false;
-        }
-
-        if(!saveFile(fileName))
-            return 0;
-
-
-//        TCHAR FileNameBuffer[MAX_PATH+1] = {0};
-
-//        OPENFILENAME ofn = {0};
-//        ofn.lStructSize = sizeof(ofn);
-//        ofn.hwndOwner = m_hWnd;
-//        ofn.hInstance = _Module.GetResourceInstance();
-//        ofn.lpstrFilter = _T("Fingerprint Templates\0*.fpt");
-//        ofn.lpstrFile = FileNameBuffer;
-//        ofn.nMaxFile = MAX_PATH;
-//        ofn.Flags = OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
-//        ofn.lpstrDefExt = _T(".fpt");
-
-//        if (GetSaveFileName(&ofn)) {
-//            HANDLE hFile = ::CreateFile(FileNameBuffer, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-//            if (INVALID_HANDLE_VALUE != hFile) {
-//                DWORD dwWritten = 0;
-//                BOOL bOK = ::WriteFile(hFile, m_RegTemplate.pbData, m_RegTemplate.cbData, &dwWritten, 0);
-//                ::CloseHandle(hFile);
-//                if (!bOK)
-//                    _com_issue_error(HRESULT_FROM_WIN32(::GetLastError()));
-//            }
-//            else
-//                _com_issue_error(HRESULT_FROM_WIN32(::GetLastError()));
-//        }
-//    }
-//    catch(int e) {
-//        if(e == -1) {
-
-//        }
-//    }
     return true;
 }
 
@@ -487,6 +450,8 @@ bool FEDialog::writeFile(const QString &fileName)
         return false;
     }
 
+
+
 //    file.write(m_RegTemplate.pbData, m_RegTemplate.cbData);
 
 //    QDataStream out(&file);
@@ -495,8 +460,24 @@ bool FEDialog::writeFile(const QString &fileName)
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
     file.write((const char *)m_RegTemplate.pbData, m_RegTemplate.cbData);
-//        out << m_RegTemplate.pbData; //, m_RegTemplate.cbData; // quint16(row) << quint16(column) << str;
+//      out << quint32(m_RegTemplate.cbData) << m_RegTemplate.pbData; //, m_RegTemplate.cbData; // quint16(row) << quint16(column) << str;
 
     QApplication::restoreOverrideCursor();
     return true;
+}
+
+
+void FEDialog::getRegTemplate(DATA_BLOB& rRegTemplate) const {
+    if (hasReadyTemplate/*m_RegTemplate.cbData && m_RegTemplate.pbData*/) { // only copy template if it is not empty
+        // Delete the old stuff that may be in the template.
+        delete [] rRegTemplate.pbData;
+        rRegTemplate.pbData = NULL;
+        rRegTemplate.cbData = 0;
+
+        // Copy the new template, but only if it has been created.
+        rRegTemplate.pbData = new BYTE[m_RegTemplate.cbData];
+        if (!rRegTemplate.pbData) _com_issue_error(E_OUTOFMEMORY);
+        ::CopyMemory(rRegTemplate.pbData, m_RegTemplate.pbData, m_RegTemplate.cbData);
+        rRegTemplate.cbData = m_RegTemplate.cbData;
+    }
 }

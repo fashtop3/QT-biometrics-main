@@ -30,6 +30,7 @@ public slots:
 
     void initContext();
 
+    void getRawRegTemplate(DATA_BLOB &dataBlob) const;
 protected:
     bool nativeEvent(const QByteArray &eventType, void *message, long *result);
     void displayImage(const DATA_BLOB* pImageBlob);
@@ -40,6 +41,8 @@ protected:
     bool saveFile(const QString &fileName);
     bool writeFile(const QString &fileName);
     void closAcquisitionAndContext();
+protected slots:
+    void setRawDataBlob(FT_IMAGE_PT fingerprintImage, int imageSize);
 private:
     Ui::FEDialog *ui;
     FT_HANDLE   m_fxContext;
@@ -51,6 +54,7 @@ private:
     HDPOPERATION   m_hOperationEnroll;     // Handle of the Operation, must be closed at exit.
     FT_REG_OPTIONS m_mcRegOptions;           // Enrollment options. Collected from check boxes of the dialog.
     DATA_BLOB      m_RegTemplate;            // BLOB that keeps Enrollment Template.
+    DATA_BLOB      m_RawRegTemplate;
     QString curFile;
     enum { MagicNumber = 0x7F51C883};
     QWidget h_bmpWidget;

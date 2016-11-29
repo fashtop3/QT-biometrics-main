@@ -1,9 +1,10 @@
 #include "evdialog.h"
 #include "ui_evdialog.h"
 
+#include <QFile>
 #include <QMessageBox>
 #include <QtWin>
-
+#include <QDebug>
 
 
 
@@ -13,6 +14,7 @@ EVDialog::EVDialog(QWidget *parent) :
 {
     ui->setupUi(this);
     ::ZeroMemory(&m_RegTemplate, sizeof(m_RegTemplate));
+    ::ZeroMemory(&raw_RegTemplate, sizeof(raw_RegTemplate));
 }
 
 EVDialog::~EVDialog()
@@ -27,7 +29,7 @@ EVDialog::~EVDialog()
 
 void EVDialog::startVerification(DATA_BLOB fp_RegTemplate)
 {
-    temp_RegTemplate = fp_RegTemplate;
+    raw_RegTemplate = fp_RegTemplate;
 }
 
 void EVDialog::on_pushButtonEnrollment_clicked()
@@ -35,10 +37,14 @@ void EVDialog::on_pushButtonEnrollment_clicked()
     FEDialog *dialog = new FEDialog(this);
     if(dialog->exec())
     {
+        dialog->closeInit();
+        dialog->getRawRegTemplate(raw_RegTemplate);
+        FVDialog fvdialog;
+        //load temp
+        fvdialog.verifyAll(raw_RegTemplate);
+    }
+    else{
         dialog->getRegTemplate(m_RegTemplate);
-        delete dialog;
-
-        on_pushButtonVerification_clicked();
     }
 
     delete dialog;
@@ -52,7 +58,8 @@ void EVDialog::on_pushButtonVerification_clicked()
                               QMessageBox::Ok|QMessageBox::Escape);
         return;
     }
+
     FVDialog dialog;
     dialog.loadRegTemplate(m_RegTemplate);
-    dialog.exec();
+    dialog.exec();//verify(raw_RegTemplate.pbData, raw_RegTemplate.cbData);
 }

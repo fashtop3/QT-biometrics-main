@@ -28,7 +28,7 @@ private:
     Ui::EVDialog *ui;
 
     DATA_BLOB  m_RegTemplate;   // BLOB that keeps Enrollment Template. It is used to pass it from Enrollment to Verification and also for saving/reading from file.
-    DATA_BLOB  temp_RegTemplate;
+    DATA_BLOB  raw_RegTemplate;
 };
 
 #endif // EVDIALOG_H

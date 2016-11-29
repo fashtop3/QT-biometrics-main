@@ -20,9 +20,11 @@ class FVDialog : public QDialog
 public:
     explicit FVDialog(QWidget *parent = 0);
     ~FVDialog();
+    void verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize);
 
 public slots:
     void loadRegTemplate(const DATA_BLOB &rRegTemplate);
+    void verifyAll(const DATA_BLOB &dataBlob);
 protected:
     bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 
@@ -41,14 +43,16 @@ private:
     RECT           m_rcDrawArea;       // Rectangle with the desired sizes of the fingerprint image to display
 
     DATA_BLOB      m_RegTemplate;      // BLOB that keeps Enrollment Template. It is received from the outside (from Enrollment dialog)
+    DATA_BLOB  temp_RegTemplate;
 
     LRESULT OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
     LRESULT OnDestroy   (UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
     LRESULT OnFpNotify  (UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
     QWidget h_bmpWidget;
+    bool matchFound;
 
     void displayFingerprintImage(const DATA_BLOB* pFingerprintImage);//FT_IMAGE_PT pFingerprintImage);
-    void verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize);
+    //void verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize);
     void addStatus(const QString &status);
 };
 

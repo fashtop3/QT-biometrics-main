@@ -5,8 +5,10 @@
 #include <comdef.h>
 #include <QMessageBox>
 #include <QScrollBar>
+#include <QDir>
 #include "dpFtrEx.h"
 #include "dpMatch.h"
+#include <QDebug>
 
 //const GUID GUID_NULL = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
 
@@ -16,7 +18,8 @@ FVDialog::FVDialog(QWidget *parent) :
     m_bDoLearning(FT_FALSE),
     m_hOperationVerify(0),
     m_fxContext(0),
-    m_mcContext(0)
+    m_mcContext(0),
+    matchFound(false)
 {
     ui->setupUi(this);
 
@@ -223,6 +226,7 @@ void FVDialog::displayFingerprintImage(const DATA_BLOB *pFingerprintImage)
 
 void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) {
     HRESULT hr = S_OK;
+    matchFound = false;
     FT_BYTE* pVerTemplate = NULL;
     try {
         FT_RETCODE rc = FT_OK;
@@ -279,20 +283,26 @@ void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) 
                 }
 
                 if (bVerified == FT_TRUE) {
-                    addStatus("Fingerprint Matches!");
+//                    addStatus("Fingerprint Matches!");
+                    ui->plainTextEdit->appendHtml("<font color = \"green\">Fingerprint Matches!.</font><br>");
                     ui->lineEditPrompt->setText("Scan another finger to run verification again.");
                     char buffer[101] = {0};
                     ULONG uSize = 100;
                     snprintf(buffer, uSize, "%lf", dFalseAcceptProbability);
                     ui->lineEditProbability->setText(buffer);
+                    matchFound = true;
+                    qDebug("Fingerprint Matches!");
                 }
                 else {
-                    addStatus("Fingerprint did not Match!");
+//                    addStatus("Fingerprint did not Match!");
+                    ui->plainTextEdit->appendHtml("<font color = \"red\">Fingerprint did not Match!.</font><br>");
                     ui->lineEditPrompt->setText("Scan another finger to run verification again.");
                     char buffer[101] = {0};
                     ULONG uSize = 100;
                     snprintf(buffer, uSize, "%lf", dFalseAcceptProbability);
                     ui->lineEditProbability->setText(buffer);
+                    matchFound = false;
+                    qDebug("Fingerprint did not Match!");
                 }
             }
             else {
@@ -301,6 +311,8 @@ void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) 
                 snprintf(buffer, uSize, "Verification Operation failed, Error: %ld.", rc);
                 QMessageBox::critical(this, "Fingerprint Verification", buffer, QMessageBox::Ok | QMessageBox::Escape);
                  ui->lineEditPrompt->setText("Scan your finger for verification again.");
+                 matchFound = false;
+                 qDebug("Fingerprint Verification.");
             }
         }
     }
@@ -311,7 +323,6 @@ void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) 
         hr = E_UNEXPECTED;
     }
     delete [] pVerTemplate;
-
 }
 
 void FVDialog::addStatus(const QString &status)
@@ -321,4 +332,51 @@ void FVDialog::addStatus(const QString &status)
     sb->setValue(sb->maximum());
 //    int lIdx = SendDlgItemMessage(IDC_STATUS, LB_ADDSTRING, 0, (LPARAM)status);
 //    SendDlgItemMessage(IDC_STATUS, LB_SETTOPINDEX, lIdx, 0);
+}
+
+void FVDialog::verifyAll(const DATA_BLOB& dataBlob)
+{
+    QDir dir;
+    dir.setFilter(QDir::Files|QDir::NoDotAndDotDot);
+    QStringList files = dir.entryList(QStringList() << "*.fpt");
+
+    QListIterator<QString> i(files);
+    while(i.hasNext()) {
+        DATA_BLOB fpData;
+        QString fileName = i.next();
+
+
+        QFile fpFile(fileName);
+        if(!fpFile.open(QIODevice::ReadOnly)) {
+            QMessageBox::critical(this, "Fingerprint verification", fpFile.errorString(), QMessageBox::Close);
+            return;
+        }
+        DWORD dwSize = fpFile.size();
+        DWORD dwNumRead = 0;
+        BYTE buffer[dwSize];
+        if(!buffer) {
+            #ifdef QT_DEBUG
+                qDebug("out of memory");
+            #endif
+            return ;
+        }
+
+        QDataStream out(&fpFile);
+        if(dwNumRead = out.readRawData((char*)buffer, dwSize)){
+            delete [] m_RegTemplate.pbData;
+
+            m_RegTemplate.pbData = buffer;
+            m_RegTemplate.cbData = dwNumRead;
+            #ifdef QT_DEBUG
+                qDebug() << "data read: " << dwNumRead;
+            #endif
+        }
+
+        verify(dataBlob.pbData, dataBlob.cbData);
+        if(matchFound)
+        {
+            QMessageBox::information(this, "Fingerprint verification", "Finger print match found", QMessageBox::Ok);
+            break;
+        }
+    }
 }

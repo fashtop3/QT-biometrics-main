@@ -16,104 +16,12 @@
 
 
 #include <QBuffer>
+#include <QDateTime>
 #include <iostream>
 #include "fvdialog.h"
 #include "resource.h"
 
 const GUID GUID_NULL = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
-
-
-void FEDialog::initContext()
-{
-    HRESULT hr = S_OK;
-
-    try {
-        FT_RETCODE rc = FT_OK;
-
-#ifdef QT_DEBUG
-        qDebug("Creating FX_ontext");
-#endif
-        // Create Context for Feature Extraction
-        if (FT_OK != (rc = FX_createContext(&m_fxContext))) {
-            QMessageBox::critical(this, "Fingerprint Enrollment", "Cannot create Feature Extraction Context.",
-                                  QMessageBox::Close|QMessageBox::Escape);
-            throw -1;
-        }
-#ifdef QT_DEBUG
-        qDebug("FX_context created");
-#endif
-
-        // Create Context for Matching
-        if (FT_OK != (rc = MC_createContext(&m_mcContext))) {
-            QMessageBox::critical(this, "Fingerprint Enrollment", "Cannot create Matching Context.",
-                                   QMessageBox::Close|QMessageBox::Escape);
-            throw -2;
-        }
-
-#ifdef QT_DEBUG
-        qDebug("MC_createContext created");
-#endif
-
-        // Get number of Pre-Enrollment feature sets needed to create on Enrollment template
-        // allocate array that keeps those Pre-Enrollment and set the first index to 0;
-        MC_SETTINGS mcSettings = {0};
-        if (FT_OK != (rc = MC_getSettings(&mcSettings))) {
-            QMessageBox::critical(this, "Fingerprint Enrollment", "Cannot get number of Pre-Reg feature sets needed to create one Enrollment template.",
-                                   QMessageBox::Close|QMessageBox::Escape);
-            throw -3;
-        }
-
-        m_NumberOfPreRegFeatures = mcSettings.numPreRegFeatures;
-        if (NULL == (m_TemplateArray = new FT_BYTE*[m_NumberOfPreRegFeatures]))
-           throw -4;
-
-        ::ZeroMemory(m_TemplateArray, sizeof(FT_BYTE**)*m_NumberOfPreRegFeatures);
-
-        m_nRegFingerprint = 0;  // This is index of the array where the first template is put.
-
-        // Start Enrollment.
-        DP_ACQUISITION_PRIORITY ePriority = DP_PRIORITY_NORMAL; // Using Normal Priority, i.e. fingerprint will be sent to
-                                                                // this process only if it has active window on the desktop.
-        HRESULT re;
-        HWND hWnd = (HWND)this->winId();
-        if(S_OK != (re = DPFPCreateAcquisition(ePriority, GUID_NULL, DP_SAMPLE_TYPE_IMAGE, hWnd, WMUS_FP_NOTIFY, &m_hOperationEnroll)))
-        {
-            if(re == E_ACCESSDENIED)
-            {
-                throw -5;
-            }
-
-            if(re == E_INVALIDARG)
-            {
-                throw -6;
-            }
-        }
-
-        if(S_OK != DPFPStartAcquisition(m_hOperationEnroll))
-        {
-            throw -7;
-        }
-
-        ui->lineEditPrompt->setText("Scan your finger for enrollment.");
-
-    }
-    catch(int e)
-    {
-        hr = e;
-    }
-
-    catch(...)
-    {
-        hr = E_UNEXPECTED;
-    }
-
-    if(hr != S_OK)
-    {
-        ui->lineEditPrompt->setText("Error happened");
-        QMessageBox::critical(this, "Fingerprint Enrol", "Enrolling error", QMessageBox::Close|QMessageBox::Escape);
-        this->close();
-    }
-}
 
 FEDialog::FEDialog(QWidget *parent) :
     QDialog(parent),
@@ -128,11 +36,9 @@ FEDialog::FEDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ::ZeroMemory(&m_RawRegTemplate, sizeof(m_RawRegTemplate));
     initContext();
-
-#ifdef QT_DEBUG
-        qDebug("Fully initialized");
-#endif
+    ui->pushButtonNext->setEnabled(false);
 }
 
 void FEDialog::closAcquisitionAndContext()
@@ -417,11 +323,13 @@ void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageS
 
 //                        addStatus("Enrollment Template generated successfully");
                         ui->plainTextEdit->appendHtml("<font color = \"green\">Enrollment Template generated successfully.</font><br>");
-                        if(saveTemplate()) {
+
+                        if(saveTemplate()) {        //save the fingerprint image to file .bmp
+                            ui->pushButtonNext->setEnabled(true);
                             hasReadyTemplate = true;
-//                            emit onVerificationStart(m_RegTemplate);
-//                            this->close();
+                            setRawDataBlob(pFingerprintImage, iFingerprintImageSize);
                         }
+
                     }
                     else {
                         QMessageBox::information(this, "Fingerprint Enrollment", "Creation of Enrollment Template Failed.",
@@ -471,11 +379,21 @@ bool FEDialog::saveTemplate()
         return false;
     }
 
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Template"), ".", tr("Fingerprint Templates (*.fpt)"));
-    if (fileName.isEmpty()) {
-        QMessageBox::critical(this, "Save Fingerprint Template", "Invalid filename", QMessageBox::Close);
+    //TODO: save template to a temp folder
+
+    QString fileName = QDir::tempPath() + "/_" + QString::number(QDateTime::currentMSecsSinceEpoch()) + "_.fpt";
+
+    QFileInfo check_file(fileName);
+    // check if file exists and if yes: Is it really a file and no directory?
+    if (check_file.exists() && check_file.isFile()) {
+        QMessageBox::critical(this, "Save Fingerprint Template", "Biometric Template exists", QMessageBox::Close);
         return false;
     }
+
+//    if (fileName.isEmpty()) {
+//        QMessageBox::critical(this, "Save Fingerprint Template", "Invalid filename", QMessageBox::Close);
+//        return false;
+//    }
 
     if(!saveFile(fileName))
         return 0;
@@ -505,7 +423,10 @@ bool FEDialog::writeFile(const QString &fileName)
         return false;
     }
 
+    QDataStream datastream(&file);
+    datastream.writeRawData((const char *) (m_RegTemplate.pbData), m_RegTemplate.cbData);
 
+    return true;
 
 //    file.write(m_RegTemplate.pbData, m_RegTemplate.cbData);
 
@@ -514,7 +435,7 @@ bool FEDialog::writeFile(const QString &fileName)
 //    out << quint32(MagicNumber);
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
-    file.write((const char *)m_RegTemplate.pbData, m_RegTemplate.cbData);
+    file.write( reinterpret_cast<const char *> (m_RegTemplate.pbData), m_RegTemplate.cbData);
 //      out << quint32(m_RegTemplate.cbData) << m_RegTemplate.pbData; //, m_RegTemplate.cbData; // quint16(row) << quint16(column) << str;
 
     QApplication::restoreOverrideCursor();
@@ -535,4 +456,128 @@ void FEDialog::getRegTemplate(DATA_BLOB& rRegTemplate) const {
         ::CopyMemory(rRegTemplate.pbData, m_RegTemplate.pbData, m_RegTemplate.cbData);
         rRegTemplate.cbData = m_RegTemplate.cbData;
     }
+}
+
+void FEDialog::getRawRegTemplate(DATA_BLOB& dataBlob) const {
+    if (hasReadyTemplate/*m_RegTemplate.cbData && m_RegTemplate.pbData*/) { // only copy template if it is not empty
+        // Delete the old stuff that may be in the template.
+        delete [] dataBlob.pbData;
+        dataBlob.pbData = NULL;
+        dataBlob.cbData = 0;
+
+        // Copy the new template, but only if it has been created.
+        dataBlob.pbData = new BYTE[m_RawRegTemplate.cbData];
+        if (!dataBlob.pbData) _com_issue_error(E_OUTOFMEMORY);
+        ::CopyMemory(dataBlob.pbData, m_RawRegTemplate.pbData, m_RawRegTemplate.cbData);
+        dataBlob.cbData = m_RawRegTemplate.cbData;
+    }
+}
+
+void FEDialog::setRawDataBlob(FT_IMAGE_PT fingerprintImage, int imageSize)
+{
+    delete [] m_RawRegTemplate.pbData;
+    m_RawRegTemplate.pbData = NULL;
+    m_RawRegTemplate.cbData = 0;
+
+    // Copy the new template, but only if it has been created.
+    m_RawRegTemplate.pbData = new BYTE[imageSize];
+    if (!m_RawRegTemplate.pbData) _com_issue_error(E_OUTOFMEMORY);
+    ::CopyMemory(m_RawRegTemplate.pbData, fingerprintImage, imageSize);
+    m_RawRegTemplate.cbData = imageSize;
+}
+
+void FEDialog::initContext()
+{
+    HRESULT hr = S_OK;
+
+    try {
+        FT_RETCODE rc = FT_OK;
+
+#ifdef QT_DEBUG
+        qDebug("Creating FX_ontext");
+#endif
+        // Create Context for Feature Extraction
+        if (FT_OK != (rc = FX_createContext(&m_fxContext))) {
+            QMessageBox::critical(this, "Fingerprint Enrollment", "Cannot create Feature Extraction Context.",
+                                  QMessageBox::Close|QMessageBox::Escape);
+            throw -1;
+        }
+#ifdef QT_DEBUG
+        qDebug("FX_context created");
+#endif
+
+        // Create Context for Matching
+        if (FT_OK != (rc = MC_createContext(&m_mcContext))) {
+            QMessageBox::critical(this, "Fingerprint Enrollment", "Cannot create Matching Context.",
+                                   QMessageBox::Close|QMessageBox::Escape);
+            throw -2;
+        }
+
+#ifdef QT_DEBUG
+        qDebug("MC_createContext created");
+#endif
+
+        // Get number of Pre-Enrollment feature sets needed to create on Enrollment template
+        // allocate array that keeps those Pre-Enrollment and set the first index to 0;
+        MC_SETTINGS mcSettings = {0};
+        if (FT_OK != (rc = MC_getSettings(&mcSettings))) {
+            QMessageBox::critical(this, "Fingerprint Enrollment", "Cannot get number of Pre-Reg feature sets needed to create one Enrollment template.",
+                                   QMessageBox::Close|QMessageBox::Escape);
+            throw -3;
+        }
+
+        m_NumberOfPreRegFeatures = mcSettings.numPreRegFeatures;
+        if (NULL == (m_TemplateArray = new FT_BYTE*[m_NumberOfPreRegFeatures]))
+           throw -4;
+
+        ::ZeroMemory(m_TemplateArray, sizeof(FT_BYTE**)*m_NumberOfPreRegFeatures);
+
+        m_nRegFingerprint = 0;  // This is index of the array where the first template is put.
+
+        // Start Enrollment.
+        DP_ACQUISITION_PRIORITY ePriority = DP_PRIORITY_NORMAL; // Using Normal Priority, i.e. fingerprint will be sent to
+                                                                // this process only if it has active window on the desktop.
+        HRESULT re;
+        HWND hWnd = (HWND)this->winId();
+        if(S_OK != (re = DPFPCreateAcquisition(ePriority, GUID_NULL, DP_SAMPLE_TYPE_IMAGE, hWnd, WMUS_FP_NOTIFY, &m_hOperationEnroll)))
+        {
+            if(re == E_ACCESSDENIED)
+            {
+                throw -5;
+            }
+
+            if(re == E_INVALIDARG)
+            {
+                throw -6;
+            }
+        }
+
+        if(S_OK != DPFPStartAcquisition(m_hOperationEnroll))
+        {
+            throw -7;
+        }
+
+        ui->lineEditPrompt->setText("Scan your finger for enrollment.");
+
+    }
+    catch(int e)
+    {
+        hr = e;
+    }
+
+    catch(...)
+    {
+        hr = E_UNEXPECTED;
+    }
+
+    if(hr != S_OK)
+    {
+        ui->lineEditPrompt->setText("Error happened");
+        QMessageBox::critical(this, "Fingerprint Enrol", "Enrolling error", QMessageBox::Close|QMessageBox::Escape);
+        this->close();
+    }
+
+#ifdef QT_DEBUG
+        qDebug("Fully initialized");
+#endif
 }

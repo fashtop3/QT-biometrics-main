@@ -7,13 +7,12 @@
 
 #include <QMessageBox>
 #include <evdialog.h>
+#include <QDebug>
 
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-
-    QString init_message;
 
     try
     {

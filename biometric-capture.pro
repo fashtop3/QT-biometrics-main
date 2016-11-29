@@ -21,7 +21,8 @@ SOURCES += main.cpp \
 HEADERS  += \
     evdialog.h \
     fedialog.h \
-    fvdialog.h
+    fvdialog.h \
+    fptpath.h
 
 FORMS += \
     evdialog.ui \

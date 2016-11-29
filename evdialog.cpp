@@ -40,7 +40,6 @@ void EVDialog::on_pushButtonEnrollment_clicked()
         dialog->closeInit();
         dialog->getRawRegTemplate(raw_RegTemplate);
         FVDialog fvdialog;
-        //load temp
         fvdialog.verifyAll(raw_RegTemplate);
     }
     else{

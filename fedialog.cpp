@@ -20,6 +20,7 @@
 #include <iostream>
 #include "fvdialog.h"
 #include "resource.h"
+#include "fptpath.h"
 
 const GUID GUID_NULL = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
 
@@ -202,7 +203,7 @@ void FEDialog::displayImage(const DATA_BLOB *pImageBlob)
 
             QPixmap pixmap = QtWin::fromHBITMAP(hBmp);
             ui->labelImage->setPixmap(pixmap);
-            pixmap.toImage().save("newImage.bmp");
+            pixmap.toImage().save(_TEMP_FPT_PATH("temp.jpg"));
 
             DeleteDC(hdcMem);
             ReleaseDC((HWND)h_bmpWidget.winId(), hdcScreen);
@@ -381,14 +382,13 @@ bool FEDialog::saveTemplate()
 
     //TODO: save template to a temp folder
 
-    QString fileName = QDir::tempPath() + "/_" + QString::number(QDateTime::currentMSecsSinceEpoch()) + "_.fpt";
+    QString fileName = _TEMP_FPT_PATH("temp.fpt"); // QDir::tempPath() + "/_" + QString::number(QDateTime::currentMSecsSinceEpoch()) + "_.fpt";
 
-    QFileInfo check_file(fileName);
     // check if file exists and if yes: Is it really a file and no directory?
-    if (check_file.exists() && check_file.isFile()) {
-        QMessageBox::critical(this, "Save Fingerprint Template", "Biometric Template exists", QMessageBox::Close);
-        return false;
-    }
+//    if (check_file.exists() && check_file.isFile()) {
+//        QMessageBox::critical(this, "Save Fingerprint Template", "Biometric Template exists", QMessageBox::Close);
+//        return false;
+//    }
 
 //    if (fileName.isEmpty()) {
 //        QMessageBox::critical(this, "Save Fingerprint Template", "Invalid filename", QMessageBox::Close);
@@ -407,15 +407,13 @@ bool FEDialog::saveFile(const QString &fileName)
         QMessageBox::critical(this, "Fingerprint Enroll", tr("Saving canceled"), QMessageBox::Close);
         return false;
     }
-
-    QMessageBox::information(this, "Fingerprint Enroll", tr("File saved"), QMessageBox::Ok);
     return true;
 }
 
 bool FEDialog::writeFile(const QString &fileName)
 {
     QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly)) {
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Truncate)) {
         QMessageBox::warning(this, tr("Save Fingerprint Template"),
                              tr("Cannot write file %1:\n%2.")
                              .arg(file.fileName())
@@ -424,7 +422,9 @@ bool FEDialog::writeFile(const QString &fileName)
     }
 
     QDataStream datastream(&file);
+    QApplication::setOverrideCursor(Qt::WaitCursor);
     datastream.writeRawData((const char *) (m_RegTemplate.pbData), m_RegTemplate.cbData);
+    QApplication::restoreOverrideCursor();
 
     return true;
 
@@ -433,13 +433,13 @@ bool FEDialog::writeFile(const QString &fileName)
 //    QDataStream out(&file);
 //    out.setVersion(QDataStream::Qt_5_7);
 //    out << quint32(MagicNumber);
-    QApplication::setOverrideCursor(Qt::WaitCursor);
+//    QApplication::setOverrideCursor(Qt::WaitCursor);
 
-    file.write( reinterpret_cast<const char *> (m_RegTemplate.pbData), m_RegTemplate.cbData);
-//      out << quint32(m_RegTemplate.cbData) << m_RegTemplate.pbData; //, m_RegTemplate.cbData; // quint16(row) << quint16(column) << str;
+//    file.write( reinterpret_cast<const char *> (m_RegTemplate.pbData), m_RegTemplate.cbData);
+////      out << quint32(m_RegTemplate.cbData) << m_RegTemplate.pbData; //, m_RegTemplate.cbData; // quint16(row) << quint16(column) << str;
 
-    QApplication::restoreOverrideCursor();
-    return true;
+//    QApplication::restoreOverrideCursor();
+//    return true;
 }
 
 

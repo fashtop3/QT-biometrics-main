@@ -9,6 +9,8 @@
 #include "dpFtrEx.h"
 #include "dpMatch.h"
 #include <QDebug>
+#include <QFileInfoList>
+#include "fptpath.h"
 
 //const GUID GUID_NULL = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
 
@@ -336,16 +338,16 @@ void FVDialog::addStatus(const QString &status)
 
 void FVDialog::verifyAll(const DATA_BLOB& dataBlob)
 {
-    QDir dir;
+    QDir dir(_FPT_PATH_);
     dir.setFilter(QDir::Files|QDir::NoDotAndDotDot);
-    QStringList files = dir.entryList(QStringList() << "*.fpt");
+    QFileInfoList files = dir.entryInfoList(QStringList() << "*.fpt");
 
-    QListIterator<QString> i(files);
+
+    QListIterator<QFileInfo> i(files);
     while(i.hasNext()) {
         DATA_BLOB fpData;
-        QString fileName = i.next();
-
-
+        QFileInfo fileInfo = i.next();
+        QString fileName = fileInfo.absoluteFilePath();
         QFile fpFile(fileName);
         if(!fpFile.open(QIODevice::ReadOnly)) {
             QMessageBox::critical(this, "Fingerprint verification", fpFile.errorString(), QMessageBox::Close);

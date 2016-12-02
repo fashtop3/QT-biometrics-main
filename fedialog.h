@@ -59,6 +59,7 @@ private:
     enum { MagicNumber = 0x7F51C883};
     QWidget h_bmpWidget;
     bool hasReadyTemplate;
+    QPalette textEditPalete;
 };
 
 #endif // FEDIALOG_H

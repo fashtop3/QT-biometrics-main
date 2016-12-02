@@ -84,7 +84,9 @@ FVDialog::FVDialog(QWidget *parent) :
         this->close();
     }
 
-    qDebug("Fully initialized");
+    textEditPalete.setColor(QPalette::Base, Qt::black); // set color "Red" for textedit base
+    textEditPalete.setColor(QPalette::Text, Qt::white); // set text color which is selected from color pallete
+    ui->textEdit->setPalette(textEditPalete);
 }
 
 FVDialog::~FVDialog()
@@ -135,6 +137,8 @@ bool FVDialog::nativeEvent(const QByteArray &eventType, void *message, long *res
     MSG *msg = static_cast<MSG*> (message);
     if(msg->message != 1025) return 0;
 
+     ui->textEdit->setTextColor(QColor(Qt::white));
+
     switch(msg->wParam) {
         case WN_COMPLETED: {
             addStatus("Fingerprint image captured");
@@ -155,21 +159,27 @@ bool FVDialog::nativeEvent(const QByteArray &eventType, void *message, long *res
             break;
         }
         case WN_DISCONNECT:
+            ui->textEdit->setTextColor(QColor(Qt::red));
             addStatus("Fingerprint reader disconnected");
             break;
         case WN_RECONNECT:
+            ui->textEdit->setTextColor(QColor(Qt::green));
             addStatus("Fingerprint reader connected");
             break;
         case WN_FINGER_TOUCHED:
+            ui->textEdit->setTextColor(QColor(Qt::darkYellow));
             addStatus("Finger touched");
             break;
         case WN_FINGER_GONE:
+            ui->textEdit->setTextColor(QColor(Qt::magenta));
             addStatus("Finger gone");
             break;
         case WN_IMAGE_READY:
+            ui->textEdit->setTextColor(QColor(Qt::darkYellow));
             addStatus("Fingerprint image ready");
             break;
         case WN_OPERATION_STOPPED:
+            ui->textEdit->setTextColor(QColor(Qt::red));
             addStatus("Fingerprint Verification Operation stopped");
             break;
     }
@@ -231,6 +241,8 @@ void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) 
     HRESULT hr = S_OK;
     matchFound = false;
     FT_BYTE* pVerTemplate = NULL;
+    ui->textEdit->setTextColor(QColor(Qt::white));
+
     try {
         FT_RETCODE rc = FT_OK;
 
@@ -282,12 +294,13 @@ void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) 
                     char buffer[101] = {0};
                     ULONG uSize = 100;
                     snprintf(buffer, uSize, "Warning: %ld (see dpRCodes.h)", rc);
+                    ui->textEdit->setTextColor(QColor(Qt::red));
                     addStatus(buffer);
                 }
 
                 if (bVerified == FT_TRUE) {
-//                    addStatus("Fingerprint Matches!");
-                    ui->plainTextEdit->appendHtml("<font color = \"green\">Fingerprint Matches!.</font><br>");
+                    ui->textEdit->setTextColor(QColor(Qt::green));
+                    addStatus("Fingerprint Matches!");
                     ui->lineEditPrompt->setText("Scan another finger to run verification again.");
                     char buffer[101] = {0};
                     ULONG uSize = 100;
@@ -297,8 +310,8 @@ void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) 
                     qDebug("Fingerprint Matches!");
                 }
                 else {
-//                    addStatus("Fingerprint did not Match!");
-                    ui->plainTextEdit->appendHtml("<font color = \"red\">Fingerprint did not Match!.</font><br>");
+                    ui->textEdit->setTextColor(QColor(Qt::red));
+                    addStatus("Fingerprint did not Match!");
                     ui->lineEditPrompt->setText("Scan another finger to run verification again.");
                     char buffer[101] = {0};
                     ULONG uSize = 100;
@@ -330,8 +343,8 @@ void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) 
 
 void FVDialog::addStatus(const QString &status)
 {
-    ui->plainTextEdit->insertPlainText(status +"\n");
-    QScrollBar *sb = ui->plainTextEdit->verticalScrollBar();
+    ui->textEdit->append(status);
+    QScrollBar *sb = ui->textEdit->verticalScrollBar();
     sb->setValue(sb->maximum());
 //    int lIdx = SendDlgItemMessage(IDC_STATUS, LB_ADDSTRING, 0, (LPARAM)status);
 //    SendDlgItemMessage(IDC_STATUS, LB_SETTOPINDEX, lIdx, 0);

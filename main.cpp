@@ -9,19 +9,15 @@
 #include <QMessageBox>
 #include <evdialog.h>
 #include <QDebug>
-#include "xmlreadwrite.h"
 
 int main(int argc, char *argv[])
 {
-//    XmlReadWrite xml;
-//    xml.readXML();
-//    return 0;
 
-    RunGuard guard( "some_random_key" );
+    RunGuard guard( "JFDBHJ87867SHBJKSD7687EKJ" );
         if ( !guard.tryToRun() )
             return 0;
 
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
      try
     {

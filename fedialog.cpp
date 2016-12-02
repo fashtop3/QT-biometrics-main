@@ -40,6 +40,10 @@ FEDialog::FEDialog(QWidget *parent) :
     ::ZeroMemory(&m_RawRegTemplate, sizeof(m_RawRegTemplate));
     initContext();
     ui->pushButtonNext->setEnabled(false);
+
+    textEditPalete.setColor(QPalette::Base, Qt::black); // set color "Red" for textedit base
+    textEditPalete.setColor(QPalette::Text, Qt::white); // set text color which is selected from color pallete
+    ui->textEdit->setPalette(textEditPalete);
 }
 
 void FEDialog::closAcquisitionAndContext()
@@ -108,6 +112,8 @@ bool FEDialog::nativeEvent(const QByteArray &eventType, void *message, long *res
 
     MSG *msg = static_cast<MSG*> (message);
     if(msg->message != 1025) return 0;
+
+    ui->textEdit->setTextColor(QColor(Qt::white));
     switch (msg->wParam) {
         case WN_COMPLETED: {
             //display message on the plaintext
@@ -134,6 +140,7 @@ bool FEDialog::nativeEvent(const QByteArray &eventType, void *message, long *res
         }
         case WN_DISCONNECT: {
             qDebug("Fingerprint reader disconnected");
+            ui->textEdit->setTextColor(QColor(Qt::red));
             addStatus("Fingerprint reader disconnected");
             break;
         }
@@ -141,6 +148,7 @@ bool FEDialog::nativeEvent(const QByteArray &eventType, void *message, long *res
 #ifdef QT_DEBUG
          qDebug("Fingerprint reader connected");
 #endif
+            ui->textEdit->setTextColor(QColor(Qt::green));
             addStatus("Fingerprint reader connected");
             break;
         }
@@ -148,18 +156,21 @@ bool FEDialog::nativeEvent(const QByteArray &eventType, void *message, long *res
 #ifdef QT_DEBUG
         qDebug("Finger touched");
 #endif
+            ui->textEdit->setTextColor(QColor(Qt::darkYellow));
             addStatus("Finger touched");
             break;
         case WN_FINGER_GONE:
 #ifdef QT_DEBUG
         qDebug("Finger gone");
 #endif
+            ui->textEdit->setTextColor(QColor(Qt::magenta));
             addStatus("Finger gone");
             break;
         case WN_IMAGE_READY:
 #ifdef QT_DEBUG
         qDebug("Fingerprint image ready");
 #endif
+            ui->textEdit->setTextColor(QColor(Qt::darkYellow));
             addStatus("Fingerprint image ready");
             break;
         case WN_OPERATION_STOPPED:
@@ -227,8 +238,8 @@ void FEDialog::displayImage(const DATA_BLOB *pImageBlob)
 
 void FEDialog::addStatus(QString status)
 {
-    ui->plainTextEdit->insertPlainText(status +"\n");
-    QScrollBar *sb = ui->plainTextEdit->verticalScrollBar();
+    ui->textEdit->append(status);
+    QScrollBar *sb = ui->textEdit->verticalScrollBar();
     sb->setValue(sb->maximum());
 //    int lIdx = SendDlgItemMessage(IDC_STATUS, LB_ADDSTRING, 0, (LPARAM)status);
 //    SendDlgItemMessage(IDC_STATUS, LB_SETTOPINDEX, lIdx, 0);
@@ -239,6 +250,8 @@ void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageS
     HRESULT hr = S_OK;
     FT_BYTE* pPreRegTemplate = NULL;
     FT_BYTE* pRegTemplate = NULL;
+
+    ui->textEdit->setTextColor(QColor(Qt::white));
 
     try {
         if (m_nRegFingerprint < m_NumberOfPreRegFeatures) { // Do not generate more Pre-Enrollment feature sets than needed
@@ -271,6 +284,7 @@ void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageS
             // If feature extraction succeeded, add the pre-Enrollment feature sets
             // to the set of 4 templates needed to create Enrollment template.
             if (FT_OK <= rc && bEextractOK == FT_TRUE) {
+                ui->textEdit->setTextColor(QColor(Qt::yellow));
                 addStatus("Pre-Enrollment feature set generated successfully");
 
                 m_TemplateArray[m_nRegFingerprint++] = pPreRegTemplate;
@@ -323,7 +337,8 @@ void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageS
                         pRegTemplate = NULL;   // This prevents deleting at the end of the function
 
 //                        addStatus("Enrollment Template generated successfully");
-                        ui->plainTextEdit->appendHtml("<font color = \"green\">Enrollment Template generated successfully.</font><br>");
+                        ui->textEdit->setTextColor(QColor(Qt::green));
+                        addStatus("Enrollment Template generated successfully");
 
                         if(saveTemplate()) {        //save the fingerprint image to file .bmp
                             ui->pushButtonNext->setEnabled(true);

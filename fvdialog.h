@@ -54,6 +54,7 @@ private:
     void displayFingerprintImage(const DATA_BLOB* pFingerprintImage);//FT_IMAGE_PT pFingerprintImage);
     //void verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize);
     void addStatus(const QString &status);
+    QPalette textEditPalete;
 };
 
 #endif // FVDIALOG_H

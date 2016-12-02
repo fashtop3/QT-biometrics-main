@@ -54,6 +54,7 @@ void EVDialog::on_pushButtonEnrollment_clicked()
 
 void EVDialog::on_pushButtonVerification_clicked()
 {
+    /* verify if there is a copy of finger template */
     if (m_RegTemplate.cbData == 0 || m_RegTemplate.pbData == NULL) {
         QMessageBox::critical(this, "Fingerprint Verification",
                               "Before attempting fingerprint verification, you must either select \"Fingerprint Enrollment\" to create a Fingerprint Enrollment Template, or read a previously saved template using \"Read Fingerprint Enrollment Template\".",
@@ -64,7 +65,7 @@ void EVDialog::on_pushButtonVerification_clicked()
     FVDialog dialog;
     /* Load a copyt template for verification */
     dialog.loadRegTemplate(m_RegTemplate);
-    dialog.exec();//verify(raw_RegTemplate.pbData, raw_RegTemplate.cbData);
+    dialog.exec();
 }
 
 void EVDialog::onPullFinished(bool isError)
@@ -97,6 +98,7 @@ void EVDialog::onPullFinished(bool isError)
             QString newName = _FPT_PATH_ + QString(QDir::separator()) + "_" + xml.data().value("id") + "_.fpt";
             QFile::rename(_TEMP_FPT_PATH("temp.fpt"), newName);
 
+            /* Push all captured fingerprint templates to the remote server */
             GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
         }
     }
@@ -106,7 +108,6 @@ void EVDialog::onPullFinished(bool isError)
     }
 
     delete dialog;
-
 }
 
 void EVDialog::onPushFinished(bool isError)

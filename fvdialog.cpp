@@ -26,63 +26,7 @@ FVDialog::FVDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    HRESULT hr = S_OK;
-    try {
-        FT_RETCODE rc = FT_OK;
-
-        // Create Context for Feature Extraction
-        if (FT_OK != (rc = FX_createContext(&m_fxContext))) {
-            QMessageBox::critical(this, "Fingerprint Verification", "Cannot create Feature Extraction Context.",
-                                  QMessageBox::Close|QMessageBox::Escape);
-            this->close();
-            return;  // return TRUE  unless you set the focus to a control
-        }
-
-        // Create Context for Matching
-        if (FT_OK != (rc = MC_createContext(&m_mcContext))) {
-            QMessageBox::critical(this, "Fingerprint Verification", "Cannot create Matching Context.",
-                                  QMessageBox::Close|QMessageBox::Escape);
-            this->close();
-            return;  // return TRUE  unless you set the focus to a control
-        }
-
-
-        // Start Verification.
-        DP_ACQUISITION_PRIORITY ePriority = DP_PRIORITY_NORMAL; // Using Normal Priority, i.e. fingerprint will be sent to
-                                              // this process only if it has active window on the desktop.
-        HRESULT re;
-        HWND m_hWnd = (HWND)this->winId();
-        if(S_OK != (re = DPFPCreateAcquisition(ePriority, GUID_NULL, DP_SAMPLE_TYPE_IMAGE, m_hWnd, WMUS_FP_NOTIFY, &m_hOperationVerify)))
-        {
-            if(re == E_ACCESSDENIED)
-            {
-                throw -5;
-            }
-
-            if(re == E_INVALIDARG)
-            {
-                throw -6;
-            }
-        }
-        if(S_OK != DPFPStartAcquisition(m_hOperationVerify))
-        {
-            throw -7;
-        }
-
-        ui->lineEditPrompt->setText("Scan your finger for verification.");
-    }
-    catch(_com_error& E) {
-        hr = E.Error();
-    }
-    catch(...) {
-        hr = E_UNEXPECTED;
-    }
-
-    if (FAILED(hr)) {
-        ui->lineEditPrompt->setText("Error happened");
-        QMessageBox::critical(this, "Fingerprint Verification", "Verification error", QMessageBox::Close|QMessageBox::Escape);
-        this->close();
-    }
+    deviceInit();
 
     textEditPalete.setColor(QPalette::Base, Qt::black); // set color "Red" for textedit base
     textEditPalete.setColor(QPalette::Text, Qt::white); // set text color which is selected from color pallete
@@ -346,22 +290,23 @@ void FVDialog::addStatus(const QString &status)
     ui->textEdit->append(status);
     QScrollBar *sb = ui->textEdit->verticalScrollBar();
     sb->setValue(sb->maximum());
-//    int lIdx = SendDlgItemMessage(IDC_STATUS, LB_ADDSTRING, 0, (LPARAM)status);
-//    SendDlgItemMessage(IDC_STATUS, LB_SETTOPINDEX, lIdx, 0);
 }
 
 int FVDialog::verifyAll(const DATA_BLOB& dataBlob)
 {
     matchFound = false;
+    /* open the dir */
     QDir dir(_FPT_PATH_);
+    /* Filter out only .fpt files*/
     dir.setFilter(QDir::Files|QDir::NoDotAndDotDot);
     QFileInfoList files = dir.entryInfoList(QStringList() << "*.fpt");
 
 
+    /* iterate the file names in the string list*/
     QListIterator<QFileInfo> i(files);
     while(i.hasNext()) {
         DATA_BLOB fpData;
-        QFileInfo fileInfo = i.next();
+        QFileInfo fileInfo = i.next(); //get the filename
         QString fileName = fileInfo.absoluteFilePath();
         QFile fpFile(fileName);
         if(!fpFile.open(QIODevice::ReadOnly)) {
@@ -390,12 +335,76 @@ int FVDialog::verifyAll(const DATA_BLOB& dataBlob)
             #endif
         }
 
+        /* calling verification method with the features gotten from Enrolling Diaoolog
+            and implicitly matches it with all the .fpt s'
+        */
         verify(dataBlob.pbData, dataBlob.cbData);
         if(matchFound)
         {
-            break;
+            break; //if match is found break the loop and return the match status
         }
     }
 
     return matchFound;
+}
+
+void FVDialog::deviceInit()
+{
+    HRESULT hr = S_OK;
+    try {
+        FT_RETCODE rc = FT_OK;
+
+        // Create Context for Feature Extraction
+        if (FT_OK != (rc = FX_createContext(&m_fxContext))) {
+            QMessageBox::critical(this, "Fingerprint Verification", "Cannot create Feature Extraction Context.",
+                                  QMessageBox::Close|QMessageBox::Escape);
+            this->close();
+            return;  // return TRUE  unless you set the focus to a control
+        }
+
+        // Create Context for Matching
+        if (FT_OK != (rc = MC_createContext(&m_mcContext))) {
+            QMessageBox::critical(this, "Fingerprint Verification", "Cannot create Matching Context.",
+                                  QMessageBox::Close|QMessageBox::Escape);
+            this->close();
+            return;  // return TRUE  unless you set the focus to a control
+        }
+
+
+        // Start Verification.
+        DP_ACQUISITION_PRIORITY ePriority = DP_PRIORITY_NORMAL; // Using Normal Priority, i.e. fingerprint will be sent to
+                                              // this process only if it has active window on the desktop.
+        HRESULT re;
+        HWND m_hWnd = (HWND)this->winId();
+        if(S_OK != (re = DPFPCreateAcquisition(ePriority, GUID_NULL, DP_SAMPLE_TYPE_IMAGE, m_hWnd, WMUS_FP_NOTIFY, &m_hOperationVerify)))
+        {
+            if(re == E_ACCESSDENIED)
+            {
+                throw -5;
+            }
+
+            if(re == E_INVALIDARG)
+            {
+                throw -6;
+            }
+        }
+        if(S_OK != DPFPStartAcquisition(m_hOperationVerify))
+        {
+            throw -7;
+        }
+
+        ui->lineEditPrompt->setText("Scan your finger for verification.");
+    }
+    catch(_com_error& E) {
+        hr = E.Error();
+    }
+    catch(...) {
+        hr = E_UNEXPECTED;
+    }
+
+    if (FAILED(hr)) {
+        ui->lineEditPrompt->setText("Error happened");
+        QMessageBox::critical(this, "Fingerprint Verification", "Verification error", QMessageBox::Close|QMessageBox::Escape);
+        this->close();
+    }
 }

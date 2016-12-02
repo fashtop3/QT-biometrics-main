@@ -16,7 +16,7 @@ GitProcessDialog::GitProcessDialog(QWidget *parent) :
     ui->setupUi(this);
 //    setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
 
-    process = new QProcess(this);
+    process = new QProcess(this); //create new process
     connect(process, &QProcess::readyReadStandardOutput,
             this, &GitProcessDialog::onReadyReadStandardOutput);
 
@@ -33,6 +33,7 @@ GitProcessDialog::GitProcessDialog(QWidget *parent) :
     ui->textEdit->setReadOnly(true);
 
 
+    /* Change the look of the TextEdit */
     textEditPallete.setColor(QPalette::Base, Qt::black); // set color "Red" for textedit base
     textEditPallete.setColor(QPalette::Text, Qt::green); // set text color which is selected from color pallete
     ui->textEdit->setPalette(textEditPallete); // change textedit palette
@@ -46,7 +47,7 @@ GitProcessDialog::~GitProcessDialog()
 void GitProcessDialog::fetchUpdates(EVDialog *parent)
 {
     GitProcessDialog processDialog(parent);
-    if(parent){
+    if(parent){ //connect pull signal to the main EVdialog onEvent
         connect(&processDialog, &GitProcessDialog::pullFinished,
                 parent, &parent->onPullFinished);
     }
@@ -57,7 +58,7 @@ void GitProcessDialog::fetchUpdates(EVDialog *parent)
 void GitProcessDialog::pushUpdates(const QString name, const QString id, EVDialog *parent)
 {
     GitProcessDialog processDialog(parent);
-    if(parent){
+    if(parent){ //connect push signal to the main EVdialog onEvent
         connect(&processDialog, &GitProcessDialog::pushFinished,
                 parent, &parent->onPushFinished);
     }
@@ -74,6 +75,7 @@ void GitProcessDialog::push(QString arg1, QString arg2)
 
     QString commandStr = QString("cmd.exe") + " /c cd " + batpath + " && " + push;
 
+    //set new working directory for the process
     process->setWorkingDirectory(batpath);
     process->start(commandStr);
 }
@@ -85,6 +87,7 @@ void GitProcessDialog::pull()
 
     QString commandStr = QString("cmd.exe") + " /c cd " + batpath + " && " + pull;
 
+    //set new working directory for the process
     process->setWorkingDirectory(batpath);
     process->start(commandStr);
 
@@ -96,23 +99,32 @@ void GitProcessDialog::onReadyReadStandardOutput()
     if(seek == 0)
         ui->textEdit->clear();
 
+    /* get all standard output */
     QString stdOutput = process->readAllStandardOutput().data();
+    /* get all standard error output */
     QString stdError = process->readAllStandardError().data();
+
+    /* check if the standard error output is not empty */
     if(!stdError.isEmpty()) {
         ui->textEdit->setTextColor(QColor(Qt::red));
         ui->textEdit->append(stdError);
         isErrorFound = true;
+        /* this point checks in when the file has been pushed to the remote repository*/
         if(stdError.contains("To ssh")) {
             isUploadDone = true;
+            /* change the push button text and enable it to mark git push completion */
             ui->pushButtonNext->setText(tr("&Completed"));
             ui->pushButtonNext->setEnabled(true);
         }
     }
+
+     /* check if the standard output is not empty */
     if(!stdOutput.isEmpty()){
         ui->textEdit->setTextColor(QColor(Qt::green));
         ui->textEdit->append(stdOutput);
     }
 
+    /* control the textEdit scroll bar to the bottom */
     QScrollBar *vScroll = ui->textEdit->verticalScrollBar();
     vScroll->setValue(vScroll->maximum());
 
@@ -122,6 +134,7 @@ void GitProcessDialog::onReadyReadStandardOutput()
 void GitProcessDialog::on_pushButtonNext_clicked()
 {
     this->close();
+    /* only called when git push complete successfully without error */
     if(isUploadDone)
     {
         emit pushFinished(isUploadDone);

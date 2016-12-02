@@ -38,34 +38,23 @@ FEDialog::FEDialog(QWidget *parent) :
     ui->setupUi(this);
 
     ::ZeroMemory(&m_RawRegTemplate, sizeof(m_RawRegTemplate));
+
+    /* Initiallize device to the context */
     initContext();
+
     ui->pushButtonNext->setEnabled(false);
 
+    /* change the text edit look with palette */
     textEditPalete.setColor(QPalette::Base, Qt::black); // set color "Red" for textedit base
     textEditPalete.setColor(QPalette::Text, Qt::white); // set text color which is selected from color pallete
     ui->textEdit->setPalette(textEditPalete);
 }
 
-void FEDialog::closAcquisitionAndContext()
-{
-    if (m_hOperationEnroll) {
-        DPFPStopAcquisition(m_hOperationEnroll);    // No error checking - what can we do at the end anyway?
-        DPFPDestroyAcquisition(m_hOperationEnroll);
-        m_hOperationEnroll = 0;
-    }
-
-    if (m_fxContext) {
-        FX_closeContext(m_fxContext);
-        m_fxContext = 0;
-    }
-
-    if (m_mcContext) {
-        MC_closeContext(m_mcContext);
-        m_mcContext = 0;
-    }
-
-}
-
+/**
+ * @brief FEDialog::closeInit
+ * @attention Closes the Acquisition, FX_closeContext and MC_closeContext
+ * temporarily
+ */
 void FEDialog::closeInit()
 {
     if (m_hOperationEnroll) {
@@ -87,7 +76,6 @@ void FEDialog::closeInit()
 
 FEDialog::~FEDialog()
 {
-
     closeInit();
 
     if(m_TemplateArray){
@@ -199,7 +187,7 @@ void FEDialog::displayImage(const DATA_BLOB *pImageBlob)
             size_t dwColorsSize = pOutBmp->bmiHeader.biClrUsed * sizeof(PALETTEENTRY);
             const BYTE* pBmpBits = (PBYTE)pOutBmp + sizeof(BITMAPINFOHEADER) + dwColorsSize;
 
-            // Create bitmap and set its handle to the control for display.
+            /* Create bitmap and set its handle to the control for display. */
 
             h_bmpWidget.resize(ui->labelImage->size());
             HDC hdcScreen = GetDC((HWND) h_bmpWidget.winId());
@@ -212,6 +200,7 @@ void FEDialog::displayImage(const DATA_BLOB *pImageBlob)
             int i = StretchDIBits(hdcMem, 0, 0, h_bmpWidget.width(), h_bmpWidget.height(), 0, 0, pOutBmp->bmiHeader.biWidth, pOutBmp->bmiHeader.biHeight, pBmpBits, pOutBmp, DIB_RGB_COLORS, SRCCOPY);
             int j = BitBlt(hdcScreen, 0, 0, h_bmpWidget.width(), h_bmpWidget.height(), hdcMem, 0, 0, SRCCOPY);
 
+            /* Create image from a bitmap to jpg format */
             QPixmap pixmap = QtWin::fromHBITMAP(hBmp);
             ui->labelImage->setPixmap(pixmap);
             pixmap.toImage().save(_TEMP_FPT_PATH("temp.jpg"));
@@ -241,10 +230,14 @@ void FEDialog::addStatus(QString status)
     ui->textEdit->append(status);
     QScrollBar *sb = ui->textEdit->verticalScrollBar();
     sb->setValue(sb->maximum());
-//    int lIdx = SendDlgItemMessage(IDC_STATUS, LB_ADDSTRING, 0, (LPARAM)status);
-//    SendDlgItemMessage(IDC_STATUS, LB_SETTOPINDEX, lIdx, 0);
 }
 
+/**
+ * @brief FEDialog::addToEnroll
+ * @param pFingerprintImage
+ * @param iFingerprintImageSize
+ * \brief Create new template for enrollment
+ */
 void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize)
 {
     HRESULT hr = S_OK;
@@ -284,6 +277,7 @@ void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageS
             // If feature extraction succeeded, add the pre-Enrollment feature sets
             // to the set of 4 templates needed to create Enrollment template.
             if (FT_OK <= rc && bEextractOK == FT_TRUE) {
+                /* output status message*/
                 ui->textEdit->setTextColor(QColor(Qt::yellow));
                 addStatus("Pre-Enrollment feature set generated successfully");
 
@@ -336,7 +330,7 @@ void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageS
 
                         pRegTemplate = NULL;   // This prevents deleting at the end of the function
 
-//                        addStatus("Enrollment Template generated successfully");
+                        /* output status message*/
                         ui->textEdit->setTextColor(QColor(Qt::green));
                         addStatus("Enrollment Template generated successfully");
 
@@ -395,20 +389,7 @@ bool FEDialog::saveTemplate()
         return false;
     }
 
-    //TODO: save template to a temp folder
-
-    QString fileName = _TEMP_FPT_PATH("temp.fpt"); // QDir::tempPath() + "/_" + QString::number(QDateTime::currentMSecsSinceEpoch()) + "_.fpt";
-
-    // check if file exists and if yes: Is it really a file and no directory?
-//    if (check_file.exists() && check_file.isFile()) {
-//        QMessageBox::critical(this, "Save Fingerprint Template", "Biometric Template exists", QMessageBox::Close);
-//        return false;
-//    }
-
-//    if (fileName.isEmpty()) {
-//        QMessageBox::critical(this, "Save Fingerprint Template", "Invalid filename", QMessageBox::Close);
-//        return false;
-//    }
+    QString fileName = _TEMP_FPT_PATH("temp.fpt");
 
     if(!saveFile(fileName))
         return 0;
@@ -436,25 +417,16 @@ bool FEDialog::writeFile(const QString &fileName)
         return false;
     }
 
+    /* open datastream */
     QDataStream datastream(&file);
+    /* disable cursor from clickable */
     QApplication::setOverrideCursor(Qt::WaitCursor);
+    /* write out Fingerprint template to file *.fpt */
     datastream.writeRawData((const char *) (m_RegTemplate.pbData), m_RegTemplate.cbData);
+    /* Release cursor */
     QApplication::restoreOverrideCursor();
 
     return true;
-
-//    file.write(m_RegTemplate.pbData, m_RegTemplate.cbData);
-
-//    QDataStream out(&file);
-//    out.setVersion(QDataStream::Qt_5_7);
-//    out << quint32(MagicNumber);
-//    QApplication::setOverrideCursor(Qt::WaitCursor);
-
-//    file.write( reinterpret_cast<const char *> (m_RegTemplate.pbData), m_RegTemplate.cbData);
-////      out << quint32(m_RegTemplate.cbData) << m_RegTemplate.pbData; //, m_RegTemplate.cbData; // quint16(row) << quint16(column) << str;
-
-//    QApplication::restoreOverrideCursor();
-//    return true;
 }
 
 

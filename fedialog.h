@@ -40,7 +40,6 @@ protected:
     bool saveTemplate();
     bool saveFile(const QString &fileName);
     bool writeFile(const QString &fileName);
-    void closAcquisitionAndContext();
 protected slots:
     void setRawDataBlob(FT_IMAGE_PT fingerprintImage, int imageSize);
 private:

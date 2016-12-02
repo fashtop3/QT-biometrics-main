@@ -4,17 +4,26 @@
 #include "DPDevClt.h"
 #include "dpFtrEx.h"
 #include "dpMatch.h"
+#include "runguard.h"
 
 #include <QMessageBox>
 #include <evdialog.h>
 #include <QDebug>
-
+#include "xmlreadwrite.h"
 
 int main(int argc, char *argv[])
 {
+//    XmlReadWrite xml;
+//    xml.readXML();
+//    return 0;
+
+    RunGuard guard( "some_random_key" );
+        if ( !guard.tryToRun() )
+            return 0;
+
     QApplication a(argc, argv);
 
-    try
+     try
     {
         DPFPInit();                             //initialize the module
 

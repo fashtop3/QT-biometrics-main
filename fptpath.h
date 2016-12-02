@@ -6,7 +6,7 @@
 // attrib +s +h "./.fpt"
 //to unhide use
 //attrib -s -h "./.fpt"
-#define _FPT_PATH_ "./.fpt"
+#define _FPT_PATH_ "C:/Users/Ayodeji/Documents/Qt/build-biometric-capture/.fpt"
 //#define _FPT_IMG_PATH(fn)  (_FPT_PATH_ "/temp/" fn)
 #define _TEMP_FPT_PATH(fn) (_FPT_PATH_ "/temp/" fn)
 

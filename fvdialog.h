@@ -24,7 +24,7 @@ public:
 
 public slots:
     void loadRegTemplate(const DATA_BLOB &rRegTemplate);
-    void verifyAll(const DATA_BLOB &dataBlob);
+    int verifyAll(const DATA_BLOB &dataBlob);
 protected:
     bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 

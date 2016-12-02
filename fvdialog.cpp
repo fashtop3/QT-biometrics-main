@@ -8,6 +8,7 @@
 #include <QDir>
 #include "dpFtrEx.h"
 #include "dpMatch.h"
+#include "xmlreadwrite.h"
 #include <QDebug>
 #include <QFileInfoList>
 #include "fptpath.h"
@@ -336,8 +337,9 @@ void FVDialog::addStatus(const QString &status)
 //    SendDlgItemMessage(IDC_STATUS, LB_SETTOPINDEX, lIdx, 0);
 }
 
-void FVDialog::verifyAll(const DATA_BLOB& dataBlob)
+int FVDialog::verifyAll(const DATA_BLOB& dataBlob)
 {
+    matchFound = false;
     QDir dir(_FPT_PATH_);
     dir.setFilter(QDir::Files|QDir::NoDotAndDotDot);
     QFileInfoList files = dir.entryInfoList(QStringList() << "*.fpt");
@@ -351,7 +353,7 @@ void FVDialog::verifyAll(const DATA_BLOB& dataBlob)
         QFile fpFile(fileName);
         if(!fpFile.open(QIODevice::ReadOnly)) {
             QMessageBox::critical(this, "Fingerprint verification", fpFile.errorString(), QMessageBox::Close);
-            return;
+            return -1;
         }
         DWORD dwSize = fpFile.size();
         DWORD dwNumRead = 0;
@@ -360,12 +362,13 @@ void FVDialog::verifyAll(const DATA_BLOB& dataBlob)
             #ifdef QT_DEBUG
                 qDebug("out of memory");
             #endif
-            return ;
+            return -1;
         }
 
         QDataStream out(&fpFile);
         if(dwNumRead = out.readRawData((char*)buffer, dwSize)){
-            delete [] m_RegTemplate.pbData;
+            //BUG: delete [] m_RegTemplate.pbData;
+            m_RegTemplate.pbData = {0};
 
             m_RegTemplate.pbData = buffer;
             m_RegTemplate.cbData = dwNumRead;
@@ -377,8 +380,9 @@ void FVDialog::verifyAll(const DATA_BLOB& dataBlob)
         verify(dataBlob.pbData, dataBlob.cbData);
         if(matchFound)
         {
-            QMessageBox::information(this, "Fingerprint verification", "Finger print match found", QMessageBox::Ok);
             break;
         }
     }
+
+    return matchFound;
 }

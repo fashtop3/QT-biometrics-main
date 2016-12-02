@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui winextras
+QT       += core gui winextras xml
 CONFIG += c++11
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -16,18 +16,25 @@ TEMPLATE = app
 SOURCES += main.cpp \
     evdialog.cpp \
     fedialog.cpp \
-    fvdialog.cpp
+    fvdialog.cpp \
+    runguard.cpp \
+    xmlreadwrite.cpp \
+    gitprocessdialog.cpp
 
 HEADERS  += \
     evdialog.h \
     fedialog.h \
     fvdialog.h \
-    fptpath.h
+    fptpath.h \
+    runguard.h \
+    xmlreadwrite.h \
+    gitprocessdialog.h
 
 FORMS += \
     evdialog.ui \
     fedialog.ui \
-    fvdialog.ui
+    fvdialog.ui \
+    gitprocessdialog.ui
 
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../build-biometric-capture/ -lDPFPApi

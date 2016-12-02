@@ -9,7 +9,14 @@
 class XmlReadWrite : public QObject
 {
     Q_OBJECT
+
+
 public:
+    enum FTYPE {
+        Capture,
+        Response
+    };
+
     explicit XmlReadWrite(QObject *parent = 0);
     void setStatus(const QString &status);
     void setStatusCode(const QString &code);
@@ -20,7 +27,7 @@ signals:
 
 public slots:
     bool writeXML();
-    bool readXML();
+    bool readXML(XmlReadWrite::FTYPE fileType);
 
 private:
 

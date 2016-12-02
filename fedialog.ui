@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Fingerorint Enrollment</string>
+   <string>Fingerprint Enrollment</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>

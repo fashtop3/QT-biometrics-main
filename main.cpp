@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <evdialog.h>
 #include <QDebug>
+#include <QCommandLineParser>
 
 int main(int argc, char *argv[])
 {
@@ -18,6 +19,21 @@ int main(int argc, char *argv[])
             return 0;
 
     QApplication app(argc, argv);
+    QCoreApplication::setApplicationName("Biometric Capturing Application");
+    QCoreApplication::setApplicationVersion("1.0");
+
+    QCommandLineParser parser;
+    parser.setApplicationDescription("Student Biometric capturing application");
+    parser.addHelpOption();
+    parser.addVersionOption();
+
+    // A boolean option with a single name (-l)
+    QCommandLineOption xmlFileChangedOption("l", QCoreApplication::translate("main", "Option for capture.xml file changed event"));
+    parser.addOption(xmlFileChangedOption);
+
+    parser.process(app);
+
+    bool xmlFileChanged = parser.isSet(xmlFileChangedOption);
 
      try
     {
@@ -38,7 +54,14 @@ int main(int argc, char *argv[])
             {
                 //call exec on evdialog
                 EVDialog dialog;
-                dialog.exec();
+                if(xmlFileChanged) {
+                    dialog.onFileChanged();
+                }
+                else{
+                    dialog.activateWindow();
+                    dialog.exec();
+                }
+
                 MC_terminate();                 // All MC_init  must be matched with MC_terminate to free up the resources
             }
             else {

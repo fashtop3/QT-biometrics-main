@@ -21,7 +21,7 @@ EVDialog::EVDialog(QWidget *parent) :
     ::ZeroMemory(&raw_RegTemplate, sizeof(raw_RegTemplate));
 
     /* set flag to alway show on top */
-    setAttribute(Qt::WA_ShowWithoutActivating);
+//    setAttribute(Qt::WA_ShowWithoutActivating);
 }
 
 EVDialog::~EVDialog()
@@ -39,7 +39,7 @@ EVDialog::~EVDialog()
  */
 void EVDialog::onFileChanged()
 {
-    xml.readXML();
+    xml.readXML(XmlReadWrite::Capture);
     GitProcessDialog::fetchUpdates(this);
 }
 

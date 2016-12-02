@@ -4,6 +4,7 @@
 #include "evdialog.h"
 
 #include <QDialog>
+#include <QTimerEvent>
 
 class QProcess;
 
@@ -35,6 +36,7 @@ public slots:
 
 private slots:
     void on_pushButtonNext_clicked();
+    void timerEvent(QTimerEvent *event);
 
 private:
     Ui::GitProcessDialog *ui;
@@ -43,6 +45,7 @@ private:
     QPalette textEditPallete;
     bool isErrorFound;
     bool isUploadDone;
+    int timerActivate;
 };
 
 #endif // GITPROCESSDIALOG_H

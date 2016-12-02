@@ -63,9 +63,16 @@ bool XmlReadWrite::writeXML()
     file.close();
 }
 
-bool XmlReadWrite::readXML()
+bool XmlReadWrite::readXML(XmlReadWrite::FTYPE fileType)
 {
-    QFile file("C:\\Apache24\\cgi-bin\\build-web-dump\\debug\\capture.xml");
+    QFile file;
+
+    if(fileType == XmlReadWrite::Capture)
+        file.setFileName("C:\\Apache24\\cgi-bin\\build-web-dump\\debug\\capture.xml");
+
+    if(fileType == XmlReadWrite::Response)
+        file.setFileName("C:\\Apache24\\cgi-bin\\build-web-dump\\debug\\response.xml");
+
     /* test to see if the file is readable and that it contains text */
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)){
         qDebug() << file.errorString();

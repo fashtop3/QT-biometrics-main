@@ -6,6 +6,8 @@
 #include <QDebug>
 #include <QScrollBar>
 #include <QColorDialog>
+#include <QMessageBox>
+#include  <QTimer>
 
 GitProcessDialog::GitProcessDialog(QWidget *parent) :
     QDialog(parent),
@@ -15,6 +17,7 @@ GitProcessDialog::GitProcessDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 //    setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+//    setWindowFlags(Qt::WindowStaysOnTopHint);
 
     process = new QProcess(this); //create new process
     connect(process, &QProcess::readyReadStandardOutput,
@@ -37,6 +40,8 @@ GitProcessDialog::GitProcessDialog(QWidget *parent) :
     textEditPallete.setColor(QPalette::Base, Qt::black); // set color "Red" for textedit base
     textEditPallete.setColor(QPalette::Text, Qt::green); // set text color which is selected from color pallete
     ui->textEdit->setPalette(textEditPallete); // change textedit palette
+
+    timerActivate = startTimer(2000);
 }
 
 GitProcessDialog::~GitProcessDialog()
@@ -46,12 +51,13 @@ GitProcessDialog::~GitProcessDialog()
 
 void GitProcessDialog::fetchUpdates(EVDialog *parent)
 {
-    GitProcessDialog processDialog(parent);
+    GitProcessDialog processDialog;
     if(parent){ //connect pull signal to the main EVdialog onEvent
         connect(&processDialog, &GitProcessDialog::pullFinished,
                 parent, &parent->onPullFinished);
     }
     processDialog.pull();
+    processDialog.setModal(true);
     processDialog.exec();
 }
 
@@ -63,6 +69,7 @@ void GitProcessDialog::pushUpdates(const QString name, const QString id, EVDialo
                 parent, &parent->onPushFinished);
     }
     processDialog.push(name, id);
+    processDialog.setModal(true);
     processDialog.exec();
 }
 
@@ -142,4 +149,20 @@ void GitProcessDialog::on_pushButtonNext_clicked()
     }
 
     emit pullFinished(isErrorFound);
+}
+
+void GitProcessDialog::timerEvent(QTimerEvent *event)
+{
+    if(event->timerId() == timerActivate)
+    {
+        this->setFocusPolicy(Qt::StrongFocus);
+        this->setFocus();
+        this->raise();
+        activateWindow();
+        killTimer(timerActivate);
+
+//        QMessageBox::information(this, "", "pop");
+    }
+
+    QDialog::timerEvent(event);
 }

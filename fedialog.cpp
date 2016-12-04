@@ -42,7 +42,8 @@ FEDialog::FEDialog(QWidget *parent) :
     /* Initiallize device to the context */
     initContext();
 
-    ui->pushButtonNext->setEnabled(false);
+    ui->pushButtonOptions->setEnabled(false);
+    ui->pushButtonOptions->setText("Close");
 
     /* change the text edit look with palette */
     textEditPalete.setColor(QPalette::Base, Qt::black); // set color "Red" for textedit base
@@ -91,6 +92,11 @@ FEDialog::~FEDialog()
     delete [] m_RegTemplate.pbData;
     m_RegTemplate.cbData = 0;
     m_RegTemplate.pbData = NULL;
+}
+
+void FEDialog::changeButtonText(const QString &str)
+{
+    ui->pushButtonOptions->setText(str);
 }
 
 bool FEDialog::nativeEvent(const QByteArray &eventType, void *message, long *result)
@@ -203,7 +209,7 @@ void FEDialog::displayImage(const DATA_BLOB *pImageBlob)
             /* Create image from a bitmap to jpg format */
             QPixmap pixmap = QtWin::fromHBITMAP(hBmp);
             ui->labelImage->setPixmap(pixmap);
-            pixmap.toImage().save(_TEMP_FPT_PATH("temp.jpg"));
+//            pixmap.toImage().save(_TEMP_FPT_PATH("temp.jpg"));
 
             DeleteDC(hdcMem);
             ReleaseDC((HWND)h_bmpWidget.winId(), hdcScreen);
@@ -335,7 +341,7 @@ void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageS
                         addStatus("Enrollment Template generated successfully");
 
                         if(saveTemplate()) {        //save the fingerprint image to file .bmp
-                            ui->pushButtonNext->setEnabled(true);
+                            ui->pushButtonOptions->setEnabled(true);
                             hasReadyTemplate = true;
                             setRawDataBlob(pFingerprintImage, iFingerprintImageSize);
                         }
@@ -389,7 +395,7 @@ bool FEDialog::saveTemplate()
         return false;
     }
 
-    QString fileName = _TEMP_FPT_PATH("temp.fpt");
+    QString fileName = getFPTTempFilePath("temp.fpt");
 
     if(!saveFile(fileName))
         return 0;

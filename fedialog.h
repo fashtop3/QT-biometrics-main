@@ -21,6 +21,8 @@ public:
     explicit FEDialog(QWidget *parent = 0);
     ~FEDialog();
 
+    void changeButtonText(const QString &str);
+
 signals:
     void onVerificationStart(DATA_BLOB fp_RegTemplate);
 

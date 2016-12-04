@@ -8,6 +8,7 @@
 #include <QColorDialog>
 #include <QMessageBox>
 #include  <QTimer>
+#include <QSettings>
 
 GitProcessDialog::GitProcessDialog(QWidget *parent) :
     QDialog(parent),
@@ -49,33 +50,40 @@ GitProcessDialog::~GitProcessDialog()
     delete ui;
 }
 
+QSettings GitProcessDialog::settings("Dynamic Drive Technology", "DDTFPBiometric"); // make static variable available
+QString GitProcessDialog::winTitle = "FPT-[" + settings.value("studName").toString() + "]-[" + settings.value("studReqID").toString() + "]"; // make static variable available
+
 void GitProcessDialog::fetchUpdates(EVDialog *parent)
 {
     GitProcessDialog processDialog;
+    processDialog.setWindowTitle(winTitle);
     if(parent){ //connect pull signal to the main EVdialog onEvent
         connect(&processDialog, &GitProcessDialog::pullFinished,
                 parent, &parent->onPullFinished);
     }
     processDialog.pull();
     processDialog.setModal(true);
-    processDialog.exec();
+    if(!processDialog.exec())
+        QApplication::closeAllWindows();
 }
 
 void GitProcessDialog::pushUpdates(const QString name, const QString id, EVDialog *parent)
 {
     GitProcessDialog processDialog(parent);
+    processDialog.setWindowTitle(winTitle);
     if(parent){ //connect push signal to the main EVdialog onEvent
         connect(&processDialog, &GitProcessDialog::pushFinished,
                 parent, &parent->onPushFinished);
     }
     processDialog.push(name, id);
     processDialog.setModal(true);
-    processDialog.exec();
+    if(!processDialog.exec())
+        QApplication::closeAllWindows();
 }
 
 void GitProcessDialog::push(QString arg1, QString arg2)
 {
-    QString batpath = QString(_FPT_PATH_) + "/";
+    QString batpath = QString(_FPT_PATH_()) + "/";
     QString push = QString("git_push.bat \"%1\" \"%2\"")
             .arg(arg1)
             .arg(arg2);
@@ -89,7 +97,7 @@ void GitProcessDialog::push(QString arg1, QString arg2)
 
 void GitProcessDialog::pull()
 {
-    QString batpath = QString(_FPT_PATH_) + "/";
+    QString batpath = QString(_FPT_PATH_()) + "/";
     QString pull = "git_pull.bat";
 
     QString commandStr = QString("cmd.exe") + " /c cd " + batpath + " && " + pull;

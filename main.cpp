@@ -14,12 +14,13 @@
 int main(int argc, char *argv[])
 {
 
-    RunGuard guard( "JFDBHJ87867SHBJKSD7687EKJ" );
+    RunGuard guard( "JFDBHJ87867SHBJKSD7687EKJ");
         if ( !guard.tryToRun() )
             return 0;
 
     QApplication app(argc, argv);
-    QCoreApplication::setApplicationName("Biometric Capturing Application");
+    QCoreApplication::setApplicationName("DDTFPBiometric");
+    QCoreApplication::setOrganizationName("Dynamic Drive Technology");
     QCoreApplication::setApplicationVersion("1.0");
 
     QCommandLineParser parser;

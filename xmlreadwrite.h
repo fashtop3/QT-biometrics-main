@@ -1,6 +1,7 @@
 #ifndef XMLREADWRITE_H
 #define XMLREADWRITE_H
 
+#include <QFile>
 #include <QHash>
 #include <QObject>
 #include <QXmlStreamReader>
@@ -17,21 +18,31 @@ public:
         Response
     };
 
-    explicit XmlReadWrite(QObject *parent = 0);
+    explicit XmlReadWrite(QString path = ".", QObject *parent = 0);
     void setStatus(const QString &status);
     void setStatusCode(const QString &code);
     void setCaptured(const QString &captured);
     const QHash<QString, QString> data();
 
+    const QString getFileName() const;
+    bool lock();
+
+    bool unlock();
+    bool isLocked();
+    const QByteArray &readAll();
 signals:
 
 public slots:
     bool writeXML();
     bool readXML(XmlReadWrite::FTYPE fileType);
+    bool setPath(const QString &path);
 
 private:
 
     QHash<QString, QString> dumpData;
+    QString fPath;
+    QFile file;
+    QFile lockControl;
 };
 
 #endif // XMLREADWRITE_H

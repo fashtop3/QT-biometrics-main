@@ -2,7 +2,9 @@
 #define EVDIALOG_H
 
 #include <QDialog>
+#include <QLockFile>
 #include <QProcess>
+#include <QSettings>
 #include "fedialog.h"
 #include "fvdialog.h"
 #include "xmlreadwrite.h"
@@ -38,6 +40,8 @@ private:
     DATA_BLOB  m_RegTemplate;   // BLOB that keeps Enrollment Template. It is used to pass it from Enrollment to Verification and also for saving/reading from file.
     DATA_BLOB  raw_RegTemplate;
     XmlReadWrite xml;
+    QSettings settings;
+    QLockFile *lockFile;
 };
 
 #endif // EVDIALOG_H

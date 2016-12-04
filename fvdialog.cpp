@@ -159,9 +159,10 @@ void FVDialog::displayFingerprintImage(const DATA_BLOB *pFingerprintImage)
             int i = StretchDIBits(hdcMem, 0, 0, h_bmpWidget.width(), h_bmpWidget.height(), 0, 0, pOutBmp->bmiHeader.biWidth, pOutBmp->bmiHeader.biHeight, pBmpBits, pOutBmp, DIB_RGB_COLORS, SRCCOPY);
             int j = BitBlt(hdcScreen, 0, 0, h_bmpWidget.width(), h_bmpWidget.height(), hdcMem, 0, 0, SRCCOPY);
 
+            /* produce image here */
             QPixmap pixmap = QtWin::fromHBITMAP(hBmp);
             ui->labelImage->setPixmap(pixmap);
-            pixmap.toImage().save("newImage.bmp");
+//            pixmap.toImage().save("newImage.bmp");
 
             DeleteDC(hdcMem);
             ReleaseDC((HWND)h_bmpWidget.winId(), hdcScreen);
@@ -296,7 +297,8 @@ int FVDialog::verifyAll(const DATA_BLOB& dataBlob)
 {
     matchFound = false;
     /* open the dir */
-    QDir dir(_FPT_PATH_);
+    qDebug() << _FPT_PATH_();
+    QDir dir(_FPT_PATH_());
     /* Filter out only .fpt files*/
     dir.setFilter(QDir::Files|QDir::NoDotAndDotDot);
     QFileInfoList files = dir.entryInfoList(QStringList() << "*.fpt");

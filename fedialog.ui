@@ -153,7 +153,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Next &gt;&gt;</string>
+        <string>Close</string>
        </property>
       </widget>
      </item>

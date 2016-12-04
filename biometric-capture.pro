@@ -9,7 +9,8 @@ CONFIG += c++11
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = biometric-capture
+#TARGET = biometric-capture
+TARGET = ../../biometric-installer/packages/com.main.product/data/DDTFPBiometric
 TEMPLATE = app
 
 

@@ -4,6 +4,7 @@
 #include "evdialog.h"
 
 #include <QDialog>
+#include <QSettings>
 #include <QTimerEvent>
 
 class QProcess;
@@ -46,6 +47,9 @@ private:
     bool isErrorFound;
     bool isUploadDone;
     int timerActivate;
+
+    static QSettings settings;
+    static QString winTitle;
 };
 
 #endif // GITPROCESSDIALOG_H

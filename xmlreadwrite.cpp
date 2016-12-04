@@ -3,9 +3,9 @@
 #include <QFile>
 #include <QDebug>
 
-XmlReadWrite::XmlReadWrite(QObject *parent) : QObject(parent)
+XmlReadWrite::XmlReadWrite(QString path, QObject *parent) : QObject(parent)
 {
-
+    fPath = path;
 }
 
 void XmlReadWrite::setStatus(const QString &status)
@@ -30,7 +30,8 @@ const QHash<QString, QString> XmlReadWrite::data()
 
 bool XmlReadWrite::writeXML()
 {
-    QFile file("C:\\Apache24\\cgi-bin\\build-web-dump\\debug\\response.xml");
+    QFile file(fPath + "\\response.xml");
+    lockControl.setFileName(file.fileName() + ".lock");
 
     if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
     {
@@ -61,17 +62,19 @@ bool XmlReadWrite::writeXML()
 
     file.write(byteArray);
     file.close();
+
+    return true;
 }
 
 bool XmlReadWrite::readXML(XmlReadWrite::FTYPE fileType)
 {
-    QFile file;
-
     if(fileType == XmlReadWrite::Capture)
-        file.setFileName("C:\\Apache24\\cgi-bin\\build-web-dump\\debug\\capture.xml");
+        file.setFileName(fPath + "\\capture.xml");
 
     if(fileType == XmlReadWrite::Response)
-        file.setFileName("C:\\Apache24\\cgi-bin\\build-web-dump\\debug\\response.xml");
+        file.setFileName(fPath + "\\response.xml");
+
+    lockControl.setFileName(file.fileName() + ".lock");
 
     /* test to see if the file is readable and that it contains text */
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)){
@@ -121,7 +124,41 @@ bool XmlReadWrite::readXML(XmlReadWrite::FTYPE fileType)
         }
 
     }
-
-
     return true;
+}
+
+bool XmlReadWrite::setPath(const QString &path)
+{
+    fPath = path;
+}
+
+const QString XmlReadWrite::getFileName() const
+{
+    return file.fileName();
+}
+
+bool XmlReadWrite::lock()
+{
+    if(!lockControl.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return false;
+
+    lockControl.close();
+    return true;
+}
+
+bool XmlReadWrite::unlock()
+{
+//    QMessageBox::critical(0, "lock", "unlock");
+
+    return lockControl.remove();
+}
+
+bool XmlReadWrite::isLocked()
+{
+    return lockControl.exists();
+}
+
+const QByteArray &XmlReadWrite::readAll()
+{
+    return file.readAll();
 }

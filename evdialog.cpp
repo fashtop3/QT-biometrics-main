@@ -8,6 +8,7 @@
 #include <QtWin>
 #include <QDebug>
 #include <QProcess>
+#include <QSettings>
 #include "fptpath.h"
 
 
@@ -16,19 +17,29 @@ EVDialog::EVDialog(QWidget *parent) :
     ui(new Ui::EVDialog)
 {
     ui->setupUi(this);
+    lockFile = 0;
     /* fill the memory with zeros */
     ::ZeroMemory(&m_RegTemplate, sizeof(m_RegTemplate));
     ::ZeroMemory(&raw_RegTemplate, sizeof(raw_RegTemplate));
 
     /* set flag to alway show on top */
 //    setAttribute(Qt::WA_ShowWithoutActivating);
+
+    QSettings settings("Dynamic Drive Technology", "DDTFPBiometric");
+
+    setWindowTitle("Fingerpint Capturing");
 }
 
 EVDialog::~EVDialog()
 {
+    /* unlock the capture.xml file to allow new req */
+    xml.unlock();
+
     delete [] m_RegTemplate.pbData;
     m_RegTemplate.cbData = 0;
     m_RegTemplate.pbData = NULL;
+
+    xml.unlock(); //repeat
 
     delete ui;
 }
@@ -39,17 +50,29 @@ EVDialog::~EVDialog()
  */
 void EVDialog::onFileChanged()
 {
+    QString pathToXml = QCoreApplication::applicationDirPath() + "/Apache24/cgi-bin";
+    /* xml open to read from the cgi server-path */
+    xml.setPath(pathToXml);
     xml.readXML(XmlReadWrite::Capture);
+    xml.lock();
+
+    /* setting global variables for windows title */
+    settings.setValue("studName", xml.data().value("name"));
+    settings.setValue("studReqID", xml.data().value("id"));
+
+    /* lunch fetc update dialog */
     GitProcessDialog::fetchUpdates(this);
 }
 
 void EVDialog::on_pushButtonEnrollment_clicked()
 {
-//    onFileChanged();
-    /* Create finger pting verification dialog */
+//    onFileChanged(); //just for
+    /* Create fingerprint Enrollement dialog */
     FEDialog dialog;
-    dialog.exec();
-    dialog.getRegTemplate(m_RegTemplate);
+    if(dialog.exec()) {
+        QMessageBox::information(this, "Fingerprint Enrollment", "Template Available for test verification", QMessageBox::Ok);
+        dialog.getRegTemplate(m_RegTemplate);
+    }
 }
 
 void EVDialog::on_pushButtonVerification_clicked()
@@ -72,9 +95,14 @@ void EVDialog::onPullFinished(bool isError)
 {
     qDebug() << "Calling pull finished" << isError;
 
+    /* get values from QSettings */
+    QString winTitle = "FPT-[" + settings.value("studName").toString() + "]-[" + settings.value("studReqID").toString() + "]";
+
     /* Create finger pting verification dialog */
     FEDialog *dialog = new FEDialog(this);
+    dialog->setWindowTitle(winTitle);
     dialog->setModal(true);
+    dialog->changeButtonText("Next >>");
     if(dialog->exec())
     {
         /* Close the Fingerprint Matching and Acuisition context to allow reinitialion in the FVDialod ctor */
@@ -83,7 +111,7 @@ void EVDialog::onPullFinished(bool isError)
         /* get copy of raw data sent from the biometric device */
         dialog->getRawRegTemplate(raw_RegTemplate);
         FVDialog fvdialog(this);
-        fvdialog.setModal(true);
+//        fvdialog.setModal(true);
         /* pass the raw template to verify with all existing saved .fpt files*/
         if(fvdialog.verifyAll(raw_RegTemplate))
         {
@@ -95,8 +123,9 @@ void EVDialog::onPullFinished(bool isError)
         }
         else{
             //copy the file from temp ../ with the req ID
-            QString newName = _FPT_PATH_ + QString(QDir::separator()) + "_" + xml.data().value("id") + "_.fpt";
-            QFile::rename(_TEMP_FPT_PATH("temp.fpt"), newName);
+            QString newName = getFPTFilePath("_" + xml.data().value("id") + "_.fpt");
+            qDebug() << getFPTTempFilePath("temp.fpt");
+            QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
 
             /* Push all captured fingerprint templates to the remote server */
             GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
@@ -112,6 +141,8 @@ void EVDialog::onPullFinished(bool isError)
 
 void EVDialog::onPushFinished(bool isError)
 {
+    Q_UNUSED(isError)
+
     xml.setStatusCode("200");
     xml.setStatus("Fingerprint captured!!!");
     xml.setCaptured("1");

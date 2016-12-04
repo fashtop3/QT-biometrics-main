@@ -27,7 +27,9 @@ EVDialog::EVDialog(QWidget *parent) :
 
     QSettings settings("Dynamic Drive Technology", "DDTFPBiometric");
 
+    setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
     setWindowTitle("Fingerpint Capturing");
+    setWindowIcon(QIcon(":/images/icon.jpg"));
 }
 
 EVDialog::~EVDialog()
@@ -111,7 +113,8 @@ void EVDialog::onPullFinished(bool isError)
         /* get copy of raw data sent from the biometric device */
         dialog->getRawRegTemplate(raw_RegTemplate);
         FVDialog fvdialog(this);
-//        fvdialog.setModal(true);
+
+
         /* pass the raw template to verify with all existing saved .fpt files*/
         if(fvdialog.verifyAll(raw_RegTemplate))
         {
@@ -149,4 +152,19 @@ void EVDialog::onPushFinished(bool isError)
     xml.writeXML();
     QMessageBox::information(this, "Fingerprint enrollment", "Fingerprint capture process completed!!!", QMessageBox::Ok);
     QApplication::closeAllWindows();
+}
+
+void EVDialog::on_pushButtonClearError_clicked()
+{
+    QDir dir(QCoreApplication::applicationDirPath() + "/Apache24/cgi-bin");
+    dir.setFilter(QDir::Files|QDir::NoDotAndDotDot);
+    QFileInfoList files = dir.entryInfoList(QStringList() << "*.lock");
+    QListIterator<QFileInfo> i(files);
+    while(i.hasNext()) {
+        QFileInfo fileInfo = i.next(); //get the filename
+        QFile lockedFile(fileInfo.absoluteFilePath());
+        lockedFile.remove();
+    }
+
+    QMessageBox::information(this, "Lock Error", "Lock files has been released", QMessageBox::Ok);
 }

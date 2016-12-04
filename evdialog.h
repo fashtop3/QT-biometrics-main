@@ -34,6 +34,8 @@ private slots:
     void onPullFinished(bool isError);
     void onPushFinished(bool isError);
 
+    void on_pushButtonClearError_clicked();
+
 private:
     Ui::EVDialog *ui;
 

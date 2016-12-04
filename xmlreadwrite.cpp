@@ -2,6 +2,7 @@
 
 #include <QFile>
 #include <QDebug>
+//#include <QMessageBox>
 
 XmlReadWrite::XmlReadWrite(QString path, QObject *parent) : QObject(parent)
 {

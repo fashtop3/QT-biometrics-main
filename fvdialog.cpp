@@ -31,6 +31,7 @@ FVDialog::FVDialog(QWidget *parent) :
     textEditPalete.setColor(QPalette::Base, Qt::black); // set color "Red" for textedit base
     textEditPalete.setColor(QPalette::Text, Qt::white); // set text color which is selected from color pallete
     ui->textEdit->setPalette(textEditPalete);
+    setWindowIcon(QIcon(":/images/icon.jpg"));
 }
 
 FVDialog::~FVDialog()

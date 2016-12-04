@@ -10,6 +10,15 @@
 #include <evdialog.h>
 #include <QDebug>
 #include <QCommandLineParser>
+#include <QThread>
+#include <QSplashScreen>
+#include <QDesktopWidget>
+
+class I : public QThread
+{
+public:
+    static void sleep(unsigned long secs) { QThread::sleep(secs); }
+};
 
 int main(int argc, char *argv[])
 {
@@ -36,6 +45,14 @@ int main(int argc, char *argv[])
 
     bool xmlFileChanged = parser.isSet(xmlFileChangedOption);
 
+    QPixmap pixmap(":/images/splash.jpg");
+    QSplashScreen splash(pixmap);
+    splash.show();
+    I::sleep(2);
+    splash.activateWindow();
+    I::sleep(1); // splash is shown for 5 seconds
+
+
      try
     {
         DPFPInit();                             //initialize the module
@@ -55,6 +72,10 @@ int main(int argc, char *argv[])
             {
                 //call exec on evdialog
                 EVDialog dialog;
+                QRect screenGeometry = QApplication::desktop()->screenGeometry();
+                int x = (screenGeometry.width()- dialog.width()) / 2;
+                int y = (screenGeometry.height()-dialog.height()) / 2;
+                splash.finish(&dialog);
                 if(xmlFileChanged) {
                     dialog.onFileChanged();
                 }

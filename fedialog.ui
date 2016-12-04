@@ -19,6 +19,9 @@
   <property name="windowTitle">
    <string>Fingerprint Enrollment</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -148,7 +151,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButtonNext">
+      <widget class="QPushButton" name="pushButtonOptions">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -164,7 +167,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>pushButtonNext</sender>
+   <sender>pushButtonOptions</sender>
    <signal>clicked()</signal>
    <receiver>FEDialog</receiver>
    <slot>accept()</slot>

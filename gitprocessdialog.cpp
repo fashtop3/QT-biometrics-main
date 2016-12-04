@@ -17,7 +17,7 @@ GitProcessDialog::GitProcessDialog(QWidget *parent) :
     isUploadDone(false)
 {
     ui->setupUi(this);
-//    setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+    setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
 //    setWindowFlags(Qt::WindowStaysOnTopHint);
 
     process = new QProcess(this); //create new process
@@ -32,9 +32,12 @@ GitProcessDialog::GitProcessDialog(QWidget *parent) :
                 ui->pushButtonNext->setEnabled(true);
             }
 
+            ui->pushButtonClose->setEnabled(true);
+
     });
 
     ui->textEdit->setReadOnly(true);
+    ui->pushButtonClose->setEnabled(false);
 
 
     /* Change the look of the TextEdit */
@@ -42,7 +45,8 @@ GitProcessDialog::GitProcessDialog(QWidget *parent) :
     textEditPallete.setColor(QPalette::Text, Qt::green); // set text color which is selected from color pallete
     ui->textEdit->setPalette(textEditPallete); // change textedit palette
 
-    timerActivate = startTimer(2000);
+    timerActivate = startTimer(1000);
+    setWindowIcon(QIcon(":/images/icon.jpg"));
 }
 
 GitProcessDialog::~GitProcessDialog()

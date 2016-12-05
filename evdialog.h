@@ -5,9 +5,11 @@
 #include <QLockFile>
 #include <QProcess>
 #include <QSettings>
+#include <QThread>
 #include "fedialog.h"
 #include "fvdialog.h"
 #include "xmlreadwrite.h"
+#include <QProgressDialog>
 
 namespace Ui {
 class EVDialog;
@@ -22,8 +24,13 @@ public:
     explicit EVDialog(QWidget *parent = 0);
     ~EVDialog();
 
+signals:
+    void startVerification();
+
 public slots:
     void onFileChanged();
+    void onVerifyComplete(bool isMatched);
+
 
 private slots:
 
@@ -44,6 +51,9 @@ private:
     XmlReadWrite xml;
     QSettings settings;
     QLockFile *lockFile;
+
+    QThread workerThread;
+    QProgressDialog *progDialog;
 };
 
 #endif // EVDIALOG_H

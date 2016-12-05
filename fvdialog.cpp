@@ -3,14 +3,19 @@
 #include <stdio.h>
 #include <QtWin>
 #include <comdef.h>
+
+#include "dpFtrEx.h"
+#include "dpMatch.h"
+
+
+#include <QThread>
+#include <QDebug>
+#include <QFileInfoList>
 #include <QMessageBox>
 #include <QScrollBar>
 #include <QDir>
-#include "dpFtrEx.h"
-#include "dpMatch.h"
+
 #include "xmlreadwrite.h"
-#include <QDebug>
-#include <QFileInfoList>
 #include "fptpath.h"
 
 //const GUID GUID_NULL = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
@@ -350,6 +355,12 @@ int FVDialog::verifyAll(const DATA_BLOB& dataBlob)
 
     return matchFound;
 }
+
+void FVDialog::onTimeout()
+{
+    qDebug() << "from the verify thread" << QThread::currentThreadId();
+}
+
 
 void FVDialog::deviceInit()
 {

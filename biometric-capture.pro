@@ -20,7 +20,8 @@ SOURCES += main.cpp \
     fvdialog.cpp \
     runguard.cpp \
     xmlreadwrite.cpp \
-    gitprocessdialog.cpp
+    gitprocessdialog.cpp \
+    verifyworker.cpp
 
 HEADERS  += \
     evdialog.h \
@@ -29,13 +30,15 @@ HEADERS  += \
     fptpath.h \
     runguard.h \
     xmlreadwrite.h \
-    gitprocessdialog.h
+    gitprocessdialog.h \
+    verifyworker.h
 
 FORMS += \
     evdialog.ui \
     fedialog.ui \
     fvdialog.ui \
-    gitprocessdialog.ui
+    gitprocessdialog.ui \
+    verificationdialog.ui
 
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../build-biometric-capture/ -lDPFPApi
@@ -69,4 +72,4 @@ DEPENDPATH += $$PWD/../build-biometric-capture
 RESOURCES += \
     resource.qrc
 
-win32: LIBS += -lgdi32
+win32: LIBS += -lgdi32 -lCrypt32

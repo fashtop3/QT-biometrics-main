@@ -1,6 +1,7 @@
 #include "evdialog.h"
 #include "gitprocessdialog.h"
 #include "ui_evdialog.h"
+#include "verifyworker.h"
 #include "xmlreadwrite.h"
 
 #include <QFile>
@@ -9,6 +10,7 @@
 #include <QDebug>
 #include <QProcess>
 #include <QSettings>
+#include <QTimer>
 #include "fptpath.h"
 
 
@@ -30,6 +32,8 @@ EVDialog::EVDialog(QWidget *parent) :
     setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
     setWindowTitle("Fingerpint Capturing");
     setWindowIcon(QIcon(":/images/icon.jpg"));
+
+    progDialog = 0;//new QProgressDialog(this);
 }
 
 EVDialog::~EVDialog()
@@ -42,6 +46,9 @@ EVDialog::~EVDialog()
     m_RegTemplate.pbData = NULL;
 
     xml.unlock(); //repeat
+
+    workerThread.quit();
+    workerThread.wait();
 
     delete ui;
 }
@@ -66,9 +73,34 @@ void EVDialog::onFileChanged()
     GitProcessDialog::fetchUpdates(this);
 }
 
+void EVDialog::onVerifyComplete(bool isMatched)
+{
+//    progDialog->close();
+    if(isMatched)
+    {
+        xml.setStatusCode("401");
+        xml.setStatus("Fingerprint already exists!!!!");
+        xml.setCaptured("0");
+        xml.writeXML();
+        QMessageBox::critical(this, "Fingerprint verification", "Process terminated!!! Fingerprint match found!.", QMessageBox::Close);
+    }
+    else{
+        //copy the file from temp ../ with the req ID
+        QString newName = getFPTFilePath("_" + xml.data().value("id") + "_.fpt");
+        qDebug() << getFPTTempFilePath("temp.fpt");
+        QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
+
+        /* Push all captured fingerprint templates to the remote server */
+        GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
+    }
+}
+
 void EVDialog::on_pushButtonEnrollment_clicked()
 {
-//    onFileChanged(); //just for
+//    onFileChanged(); //just for debug
+
+//    onPullFinished(false);
+
     /* Create fingerprint Enrollement dialog */
     FEDialog dialog;
     if(dialog.exec()) {
@@ -112,34 +144,54 @@ void EVDialog::onPullFinished(bool isError)
         dialog->close();
         /* get copy of raw data sent from the biometric device */
         dialog->getRawRegTemplate(raw_RegTemplate);
-        FVDialog fvdialog(this);
 
+        qDebug() << "From the main thread: " << QThread::currentThreadId();
+
+        progDialog = new QProgressDialog(this);
+        VerifyWorker worker(raw_RegTemplate);
+        worker.moveToThread(&workerThread);
+
+        connect(this, SIGNAL(startVerification()), &worker, SLOT(onStartVerification()));
+        connect(&worker, static_cast<void (VerifyWorker::*)(bool)> (&VerifyWorker::verifyComplete),
+                this, static_cast<void (EVDialog::*)(bool)> (&EVDialog::onVerifyComplete) );
+        connect(&worker, SIGNAL(verifyComplete(bool)), progDialog, SLOT(close()));
+
+
+        workerThread.start();
+        emit startVerification();
+
+
+        progDialog->setLabelText("Verifying fingerpring... Please do not close this dialog!");
+        progDialog->setValue(40);
+        progDialog->activateWindow();
+        progDialog->setModal(true);
+        progDialog->exec();
 
         /* pass the raw template to verify with all existing saved .fpt files*/
-        if(fvdialog.verifyAll(raw_RegTemplate))
-        {
-            xml.setStatusCode("401");
-            xml.setStatus("Fingerprint already exists!!!!");
-            xml.setCaptured("0");
-            xml.writeXML();
-            QMessageBox::critical(this, "Fingerprint verification", "Process terminated!!! Fingerprint match found!.", QMessageBox::Close);
-        }
-        else{
-            //copy the file from temp ../ with the req ID
-            QString newName = getFPTFilePath("_" + xml.data().value("id") + "_.fpt");
-            qDebug() << getFPTTempFilePath("temp.fpt");
-            QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
+//        if(fvdialog.verifyAll(raw_RegTemplate))
+//        {
+//            xml.setStatusCode("401");
+//            xml.setStatus("Fingerprint already exists!!!!");
+//            xml.setCaptured("0");
+//            xml.writeXML();
+//            QMessageBox::critical(this, "Fingerprint verification", "Process terminated!!! Fingerprint match found!.", QMessageBox::Close);
+//        }
+//        else{
+//            //copy the file from temp ../ with the req ID
+//            QString newName = getFPTFilePath("_" + xml.data().value("id") + "_.fpt");
+//            qDebug() << getFPTTempFilePath("temp.fpt");
+//            QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
 
-            /* Push all captured fingerprint templates to the remote server */
-            GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
-        }
+//            /* Push all captured fingerprint templates to the remote server */
+//            GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
+//        }
     }
     else{ //when exec return false
         /* get the template raedy for OnVerification button clicked */
         dialog->getRegTemplate(m_RegTemplate);
     }
 
-    delete dialog;
+    delete dialog;//, thread;
 }
 
 void EVDialog::onPushFinished(bool isError)

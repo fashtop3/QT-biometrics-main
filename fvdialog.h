@@ -22,9 +22,14 @@ public:
     ~FVDialog();
     void verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize);
 
+signals:
+    void verifyComplete(bool isMatchFound);
+
 public slots:
     void loadRegTemplate(const DATA_BLOB &rRegTemplate);
     int verifyAll(const DATA_BLOB &dataBlob);
+    void onTimeout();
+
 protected:
     void deviceInit();
     bool nativeEvent(const QByteArray &eventType, void *message, long *result);

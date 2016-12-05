@@ -204,8 +204,7 @@ void EVDialog::onPullFinished(bool isError)
         feDialog->nextButtonPtr()->setEnabled(0);
     });
 
-    if(feDialog->exec())
-    {}
+    feDialog->exec();
 
 
 

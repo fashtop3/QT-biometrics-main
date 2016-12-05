@@ -145,11 +145,14 @@ void EVDialog::onPullFinished(bool isError)
     feDialog->setWindowTitle(winTitle);
     feDialog->setModal(true);
 
+    /*connect fingerprint template generated to enable next button*/
     connect(feDialog, static_cast<void (FEDialog::*)(bool)>(feDialog->templateGenerated), [this](bool gen){
         feDialog->nextButtonPtr()->setEnabled(gen);
     });
 
+    /*when next button is clicked*/
     connect(feDialog->nextButtonPtr(), &feDialog->nextButtonPtr()->clicked, [this](){
+        /*reset progress bar*/
         feDialog->progressBarPtr()->reset();
         /* Close the Fingerprint Matching and Acuisition context to allow reinitialion in the FVDialod ctor */
         feDialog->closeInit();
@@ -157,20 +160,22 @@ void EVDialog::onPullFinished(bool isError)
         feDialog->getRawRegTemplate(raw_RegTemplate);
 
         qDebug() << "From the main thread: " << QThread::currentThreadId();
+        /*Create new data class for matching BLOB data*/
         fpWorker = new FPDataV(static_cast<QObject*>(feDialog));
-//        fpWorker.onStartVerification(raw_RegTemplate);
-
-
+        /*move to new Thread apart from the gui thread*/
         fpWorker->moveToThread(&workerThread);
 
+        /*connect slot to start full verification*/
         connect(this, SIGNAL(startVerification(DATA_BLOB)), fpWorker, SLOT(onStartVerification(DATA_BLOB)));
+        /*Connect/Get verification updates from the data class tp update the progress bar*/
         connect(fpWorker, static_cast<void (FPDataV::*)(int run, int total)>(&fpWorker->progress),
                 [this](int run, int total){
             int load = (run/total)*100;
             feDialog->progressBarPtr()->setVisible(1);
             feDialog->progressBarPtr()->setValue(load);
-            qDebug() << "run: " << load << "total: " << total;
-        });
+        });//
+
+        /*Connect the anonymous function to the signal emmmited when varification complets*/
         connect(fpWorker, static_cast<void (FPDataV::*)(bool isMatched)>(&fpWorker->done),
                 [this](bool isMatched){
 
@@ -192,56 +197,22 @@ void EVDialog::onPullFinished(bool isError)
                 GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
             }
 
-//            fpWorker->closeInit();
-            delete fpWorker;
-            workerThread.exit(0);
+            delete fpWorker; //delete the worker class to allow on next open
+            workerThread.exit(0); //exit the thread to enable transfer of new data to thread
             workerThread.wait();
         });
 
-        workerThread.start();
-        emit startVerification(raw_RegTemplate);
+        /*This is where the whole verification processes starts...*/
+        workerThread.start(); //thread started
+        emit startVerification(raw_RegTemplate); //this signal prompts verification process
         feDialog->progressBarPtr()->setVisible(1);
-        feDialog->nextButtonPtr()->setEnabled(0);
+        feDialog->nextButtonPtr()->setEnabled(0); //disable pusbutton
     });
 
     feDialog->exec();
 
-
-
-
-//        connect(&worker, static_cast<void (VerifyWorker::*)(bool)> (&VerifyWorker::verifyComplete),
-//                this, static_cast<void (EVDialog::*)(bool)> (&EVDialog::onVerifyComplete) );
-//        connect(&worker, SIGNAL(verifyComplete(bool)), progDialog, SLOT(close()));
-
-
-
-
-
-
-        /* pass the raw template to verify with all existing saved .fpt files*/
-//        FPDataV fpdatav(raw_RegTemplate);
-//        if(fvdialog.verifyAll())
-//        {
-//            xml.setStatusCode("401");
-//            xml.setStatus("Fingerprint already exists!!!!");
-//            xml.setCaptured("0");
-//            xml.writeXML();
-//            QMessageBox::critical(this, "Fingerprint verification", "Process terminated!!! Fingerprint match found!.", QMessageBox::Close);
-//        }
-//        else{
-//            //copy the file from temp ../ with the req ID
-//            QString newName = getFPTFilePath("_" + xml.data().value("id") + "_.fpt");
-//            qDebug() << getFPTTempFilePath("temp.fpt");
-//            QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
-
-//            /* Push all captured fingerprint templates to the remote server */
-//            GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
-//        }
-//    }
-//    else{ //when exec return false
         /* get the template raedy for OnVerification button clicked */
         feDialog->getRegTemplate(m_RegTemplate);
-//    }
 
     delete feDialog;//, thread;
 }

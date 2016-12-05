@@ -15,7 +15,7 @@
 
 //const GUID GUID_NULL = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
 
-FPDataV::FPDataV(const DATA_BLOB &data, QObject *parent) :
+FPDataV::FPDataV(QObject *parent) :
     QObject(parent),
     m_bDoLearning(FT_FALSE),
     m_hOperationVerify(0),
@@ -23,12 +23,11 @@ FPDataV::FPDataV(const DATA_BLOB &data, QObject *parent) :
     m_mcContext(0),
     matchFound(false)
 {
-    dataCopy = data;
     ::ZeroMemory(&m_RegTemplate, sizeof(m_RegTemplate));
     deviceInit();
 }
 
-FPDataV::~FPDataV()
+void FPDataV::closeInit()
 {
     if (m_hOperationVerify) {
         DPFPStopAcquisition(m_hOperationVerify);    // No error checking - what can we do at the end anyway?
@@ -45,8 +44,13 @@ FPDataV::~FPDataV()
         MC_closeContext(m_mcContext);
         m_mcContext = 0;
     }
+}
 
-    delete[] m_RegTemplate.pbData;
+FPDataV::~FPDataV()
+{
+    closeInit();
+
+    m_RegTemplate.pbData = {0};
     m_RegTemplate.cbData = 0;
     m_RegTemplate.pbData = NULL;
 
@@ -165,7 +169,12 @@ void FPDataV::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) {
     delete [] pVerTemplate;
 }
 
-int FPDataV::verifyAll(/*const DATA_BLOB& dataBlob*/)
+void FPDataV::setFPData(const DATA_BLOB &data)
+{
+    dataCopy = data;
+}
+
+int FPDataV::verifyAll(const DATA_BLOB& dataBlob)
 {
     matchFound = false;
     /* open the dir */
@@ -176,10 +185,10 @@ int FPDataV::verifyAll(/*const DATA_BLOB& dataBlob*/)
     QFileInfoList files = dir.entryInfoList(QStringList() << "*.fpt");
 
 
+    int run = 0;
     /* iterate the file names in the string list*/
     QListIterator<QFileInfo> i(files);
     while(i.hasNext()) {
-        DATA_BLOB fpData;
         QFileInfo fileInfo = i.next(); //get the filename
         QString fileName = fileInfo.absoluteFilePath();
         QFile fpFile(fileName);
@@ -212,14 +221,25 @@ int FPDataV::verifyAll(/*const DATA_BLOB& dataBlob*/)
         /* calling verification method with the features gotten from Enrolling Diaoolog
             and implicitly matches it with all the .fpt s'
         */
-        verify(dataCopy.pbData, dataCopy.cbData);
+        verify(dataBlob.pbData, dataBlob.cbData);
         if(matchFound)
         {
+            qDebug() << "match found";
             break; //if match is found break the loop and return the match status
         }
+
+        ++run;
+        emit progress(run, files.count());
     }
 
     return matchFound;
+}
+
+void FPDataV::onStartVerification(const DATA_BLOB &blob)
+{
+    bool isMatched = verifyAll(blob);
+    emit done(isMatched);
+    onTimeout();
 }
 
 void FPDataV::onTimeout()

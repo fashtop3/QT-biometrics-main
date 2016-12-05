@@ -15,16 +15,21 @@ class FPDataV : public QObject
     enum { WMUS_FP_NOTIFY = WM_USER+1 };
 
 public:
-    explicit FPDataV(const DATA_BLOB &data, QObject *parent = 0);
+    explicit FPDataV(QObject *parent = 0);
     ~FPDataV();
     void verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize);
+    void setFPData(const DATA_BLOB &data);
+
+    void closeInit();
 
 signals:
-    void verifyComplete(bool isMatchFound);
+    void done(bool isMatchFound);
+    void progress(int run, int total);
 
 public slots:
     void loadRegTemplate(const DATA_BLOB &rRegTemplate);
     int verifyAll(const DATA_BLOB &dataBlob);
+    void onStartVerification(const DATA_BLOB &blob);
     void onTimeout();
 
 protected:

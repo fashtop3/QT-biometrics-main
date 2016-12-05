@@ -42,8 +42,10 @@ FEDialog::FEDialog(QWidget *parent) :
     /* Initiallize device to the context */
     initContext();
 
-    ui->pushButtonOptions->setEnabled(false);
-    ui->pushButtonOptions->setText("Close");
+    ui->pushButtonNext->setEnabled(false);
+    ui->progressBar->setVisible(0);
+    ui->progressBar->setRange(0,100);
+    ui->progressBar->setValue(0);
 
     /* change the text edit look with palette */
     textEditPalete.setColor(QPalette::Base, Qt::black); // set color "Red" for textedit base
@@ -95,9 +97,14 @@ FEDialog::~FEDialog()
     m_RegTemplate.pbData = NULL;
 }
 
-void FEDialog::changeButtonText(const QString &str)
+QPushButton *FEDialog::nextButtonPtr()
 {
-    ui->pushButtonOptions->setText(str);
+    return ui->pushButtonNext;
+}
+
+QProgressBar *FEDialog::progressBarPtr()
+{
+    return ui->progressBar;
 }
 
 bool FEDialog::nativeEvent(const QByteArray &eventType, void *message, long *result)
@@ -342,7 +349,8 @@ void FEDialog::addToEnroll(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageS
                         addStatus("Enrollment Template generated successfully");
 
                         if(saveTemplate()) {        //save the fingerprint image to file .bmp
-                            ui->pushButtonOptions->setEnabled(true);
+//                            ui->pushButtonNext->setEnabled(true);
+                            emit templateGenerated(true);
                             hasReadyTemplate = true;
                             setRawDataBlob(pFingerprintImage, iFingerprintImageSize);
                         }

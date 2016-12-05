@@ -389,7 +389,7 @@ void FVDialog::deviceInit()
         DP_ACQUISITION_PRIORITY ePriority = DP_PRIORITY_NORMAL; // Using Normal Priority, i.e. fingerprint will be sent to
                                               // this process only if it has active window on the desktop.
         HRESULT re;
-        HWND m_hWnd = 0;//(HWND)this->winId();
+        HWND m_hWnd = (HWND)this->winId();
         if(S_OK != (re = DPFPCreateAcquisition(ePriority, GUID_NULL, DP_SAMPLE_TYPE_IMAGE, m_hWnd, WMUS_FP_NOTIFY, &m_hOperationVerify)))
         {
             if(re == E_ACCESSDENIED)

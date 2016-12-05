@@ -14,6 +14,8 @@
 #include <QTimer>
 #include "fptpath.h"
 
+Q_DECLARE_METATYPE(DATA_BLOB);
+
 
 EVDialog::EVDialog(QWidget *parent) :
     QDialog(parent),
@@ -33,8 +35,6 @@ EVDialog::EVDialog(QWidget *parent) :
     setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
     setWindowTitle("Fingerpint Capturing");
     setWindowIcon(QIcon(":/images/icon.jpg"));
-
-    progDialog = 0;//new QProgressDialog(this);
 }
 
 EVDialog::~EVDialog()
@@ -100,14 +100,20 @@ void EVDialog::on_pushButtonEnrollment_clicked()
 {
 //    onFileChanged(); //just for debug
 
-    onPullFinished(false); return;
+//    onPullFinished(false); return;
 
     /* Create fingerprint Enrollement dialog */
     FEDialog dialog;
-    if(dialog.exec()) {
-        QMessageBox::information(this, "Fingerprint Enrollment", "Template Available for test verification", QMessageBox::Ok);
-        dialog.getRegTemplate(m_RegTemplate);
-    }
+    connect(&dialog, static_cast<void (FEDialog::*)(bool)>(feDialog->templateGenerated), [&dialog](bool gen){
+        if(gen){
+            QMessageBox::information(&dialog, "Fingerprint Enrollment", "Template Available for test verification", QMessageBox::Ok);
+            dialog.close();
+        }
+    });
+
+    dialog.exec();
+
+    dialog.getRegTemplate(m_RegTemplate);
 }
 
 void EVDialog::on_pushButtonVerification_clicked()
@@ -128,74 +134,117 @@ void EVDialog::on_pushButtonVerification_clicked()
 
 void EVDialog::onPullFinished(bool isError)
 {
+    qRegisterMetaType<DATA_BLOB>("DATA_BLOB");
     qDebug() << "Calling pull finished" << isError;
 
     /* get values from QSettings */
     QString winTitle = "FPT-[" + settings.value("studName").toString() + "]-[" + settings.value("studReqID").toString() + "]";
 
     /* Create finger pting verification dialog */
-    FEDialog *dialog = new FEDialog(this);
-    dialog->setWindowTitle(winTitle);
-    dialog->setModal(true);
-    dialog->changeButtonText("Next >>");
-    if(dialog->exec())
-    {
+    feDialog = new FEDialog(this);
+    feDialog->setWindowTitle(winTitle);
+    feDialog->setModal(true);
+
+    connect(feDialog, static_cast<void (FEDialog::*)(bool)>(feDialog->templateGenerated), [this](bool gen){
+        feDialog->nextButtonPtr()->setEnabled(gen);
+    });
+
+    connect(feDialog->nextButtonPtr(), &feDialog->nextButtonPtr()->clicked, [this](){
+        feDialog->progressBarPtr()->reset();
         /* Close the Fingerprint Matching and Acuisition context to allow reinitialion in the FVDialod ctor */
-        dialog->closeInit();
-        dialog->close();
+        feDialog->closeInit();
         /* get copy of raw data sent from the biometric device */
-        dialog->getRawRegTemplate(raw_RegTemplate);
+        feDialog->getRawRegTemplate(raw_RegTemplate);
 
         qDebug() << "From the main thread: " << QThread::currentThreadId();
+        fpWorker = new FPDataV(static_cast<QObject*>(feDialog));
+//        fpWorker.onStartVerification(raw_RegTemplate);
 
 
-//        progDialog = new QProgressDialog(this);
-//        VerifyWorker worker(raw_RegTemplate);
-//        worker.moveToThread(&workerThread);
+        fpWorker->moveToThread(&workerThread);
 
-//        connect(this, SIGNAL(startVerification()), &worker, SLOT(onStartVerification()));
+        connect(this, SIGNAL(startVerification(DATA_BLOB)), fpWorker, SLOT(onStartVerification(DATA_BLOB)));
+        connect(fpWorker, static_cast<void (FPDataV::*)(int run, int total)>(&fpWorker->progress),
+                [this](int run, int total){
+            int load = (run/total)*100;
+            feDialog->progressBarPtr()->setVisible(1);
+            feDialog->progressBarPtr()->setValue(load);
+            qDebug() << "run: " << load << "total: " << total;
+        });
+        connect(fpWorker, static_cast<void (FPDataV::*)(bool isMatched)>(&fpWorker->done),
+                [this](bool isMatched){
+
+            if(isMatched) {
+                xml.setStatusCode("401");
+                xml.setStatus("Fingerprint already exists!!!!");
+                xml.setCaptured("0");
+                xml.writeXML();
+                QMessageBox::critical(this, "Fingerprint Verification", "Fingerpint match found!!! unable to proceed!.",
+                                      QMessageBox::Close);
+            }
+            else{
+                //copy the file from temp ../ with the req ID
+                QString newName = getFPTFilePath("_" + xml.data().value("id") + "_.fpt");
+                qDebug() << getFPTTempFilePath("temp.fpt");
+                QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
+
+                /* Push all captured fingerprint templates to the remote server */
+                GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
+            }
+
+//            fpWorker->closeInit();
+            delete fpWorker;
+            workerThread.exit(0);
+            workerThread.wait();
+        });
+
+        workerThread.start();
+        emit startVerification(raw_RegTemplate);
+        feDialog->progressBarPtr()->setVisible(1);
+        feDialog->nextButtonPtr()->setEnabled(0);
+    });
+
+    if(feDialog->exec())
+    {}
+
+
+
+
 //        connect(&worker, static_cast<void (VerifyWorker::*)(bool)> (&VerifyWorker::verifyComplete),
 //                this, static_cast<void (EVDialog::*)(bool)> (&EVDialog::onVerifyComplete) );
 //        connect(&worker, SIGNAL(verifyComplete(bool)), progDialog, SLOT(close()));
 
 
-//        workerThread.start();
-//        emit startVerification();
 
 
-//        progDialog->setLabelText("Verifying fingerpring... Please do not close this dialog!");
-//        progDialog->setValue(40);
-//        progDialog->activateWindow();
-//        progDialog->setModal(true);
-//        progDialog->exec();
+
 
         /* pass the raw template to verify with all existing saved .fpt files*/
-//        FVDialog fvdialog;
-        FPDataV fvdialog;
-        if(fvdialog.verifyAll(raw_RegTemplate))
-        {
-            xml.setStatusCode("401");
-            xml.setStatus("Fingerprint already exists!!!!");
-            xml.setCaptured("0");
-            xml.writeXML();
-            QMessageBox::critical(this, "Fingerprint verification", "Process terminated!!! Fingerprint match found!.", QMessageBox::Close);
-        }
-        else{
-            //copy the file from temp ../ with the req ID
-            QString newName = getFPTFilePath("_" + xml.data().value("id") + "_.fpt");
-            qDebug() << getFPTTempFilePath("temp.fpt");
-            QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
+//        FPDataV fpdatav(raw_RegTemplate);
+//        if(fvdialog.verifyAll())
+//        {
+//            xml.setStatusCode("401");
+//            xml.setStatus("Fingerprint already exists!!!!");
+//            xml.setCaptured("0");
+//            xml.writeXML();
+//            QMessageBox::critical(this, "Fingerprint verification", "Process terminated!!! Fingerprint match found!.", QMessageBox::Close);
+//        }
+//        else{
+//            //copy the file from temp ../ with the req ID
+//            QString newName = getFPTFilePath("_" + xml.data().value("id") + "_.fpt");
+//            qDebug() << getFPTTempFilePath("temp.fpt");
+//            QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
 
-            /* Push all captured fingerprint templates to the remote server */
-            GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
-        }
-    }
-    else{ //when exec return false
+//            /* Push all captured fingerprint templates to the remote server */
+//            GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
+//        }
+//    }
+//    else{ //when exec return false
         /* get the template raedy for OnVerification button clicked */
-        dialog->getRegTemplate(m_RegTemplate);
-    }
+        feDialog->getRegTemplate(m_RegTemplate);
+//    }
 
-    delete dialog;//, thread;
+    delete feDialog;//, thread;
 }
 
 void EVDialog::onPushFinished(bool isError)
@@ -222,5 +271,5 @@ void EVDialog::on_pushButtonClearError_clicked()
         lockedFile.remove();
     }
 
-    QMessageBox::information(this, "Lock Error", "Lock files has been released", QMessageBox::Ok);
+    QMessageBox::information(this, "Clear Error", "Lock files has been released", QMessageBox::Ok);
 }

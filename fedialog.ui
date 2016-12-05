@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>473</width>
-    <height>341</height>
+    <width>479</width>
+    <height>329</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -15,6 +15,18 @@
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>479</width>
+    <height>329</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>479</width>
+    <height>329</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Fingerprint Enrollment</string>
@@ -151,12 +163,29 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButtonOptions">
+      <widget class="QProgressBar" name="progressBar">
+       <property name="value">
+        <number>24</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButtonNext">
        <property name="enabled">
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Close</string>
+        <string>&amp;Next &gt;&gt;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButtonClose">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>&amp;Close</string>
        </property>
       </widget>
      </item>
@@ -167,18 +196,18 @@
  <resources/>
  <connections>
   <connection>
-   <sender>pushButtonOptions</sender>
+   <sender>pushButtonClose</sender>
    <signal>clicked()</signal>
    <receiver>FEDialog</receiver>
-   <slot>accept()</slot>
+   <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>396</x>
-     <y>319</y>
+     <x>359</x>
+     <y>308</y>
     </hint>
     <hint type="destinationlabel">
-     <x>338</x>
-     <y>311</y>
+     <x>307</x>
+     <y>297</y>
     </hint>
    </hints>
   </connection>

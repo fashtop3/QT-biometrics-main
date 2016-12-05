@@ -45,12 +45,14 @@ int main(int argc, char *argv[])
 
     bool xmlFileChanged = parser.isSet(xmlFileChangedOption);
 
+#ifndef QT_DEBUG
     QPixmap pixmap(":/images/splash.jpg");
     QSplashScreen splash(pixmap);
     splash.show();
     I::sleep(2);
     splash.activateWindow();
     I::sleep(1); // splash is shown for 5 seconds
+#endif
 
 
      try
@@ -75,7 +77,9 @@ int main(int argc, char *argv[])
                 QRect screenGeometry = QApplication::desktop()->screenGeometry();
                 int x = (screenGeometry.width()- dialog.width()) / 2;
                 int y = (screenGeometry.height()-dialog.height()) / 2;
+#ifndef QT_DEBUG
                 splash.finish(&dialog);
+#endif
                 if(xmlFileChanged) {
                     dialog.onFileChanged();
                 }

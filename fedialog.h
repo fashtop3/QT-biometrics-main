@@ -2,6 +2,7 @@
 #define FEDIALOG_H
 
 #include <QDialog>
+#include <QProgressBar>
 #include "dpDefs.h"
 #include "dpRCodes.h"
 #include "DPDevClt.h"
@@ -23,8 +24,10 @@ public:
 
     void changeButtonText(const QString &str);
 
+    QPushButton *nextButtonPtr();
+    QProgressBar *progressBarPtr();
 signals:
-    void onVerificationStart(DATA_BLOB fp_RegTemplate);
+    void templateGenerated(bool gen);
 
 public slots:
     void getRegTemplate(DATA_BLOB &rRegTemplate) const;

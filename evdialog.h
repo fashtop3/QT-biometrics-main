@@ -7,6 +7,7 @@
 #include <QSettings>
 #include <QThread>
 #include "fedialog.h"
+#include "fpdatav.h"
 #include "fvdialog.h"
 #include "xmlreadwrite.h"
 #include <QProgressDialog>
@@ -25,7 +26,7 @@ public:
     ~EVDialog();
 
 signals:
-    void startVerification();
+    void startVerification(const DATA_BLOB &blob);
 
 public slots:
     void onFileChanged();
@@ -53,7 +54,8 @@ private:
     QLockFile *lockFile;
 
     QThread workerThread;
-    QProgressDialog *progDialog;
+    FEDialog *feDialog;
+    FPDataV *fpWorker;
 };
 
 #endif // EVDIALOG_H

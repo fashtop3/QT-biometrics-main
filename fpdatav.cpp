@@ -1,5 +1,4 @@
-#include "fvdialog.h"
-#include "ui_fvdialog.h"
+#include "fpdatav.h"
 #include <stdio.h>
 #include <QtWin>
 #include <comdef.h>
@@ -7,39 +6,29 @@
 #include "dpFtrEx.h"
 #include "dpMatch.h"
 
-
 #include <QThread>
 #include <QDebug>
 #include <QFileInfoList>
-#include <QMessageBox>
-#include <QScrollBar>
 #include <QDir>
 
-#include "xmlreadwrite.h"
 #include "fptpath.h"
 
 //const GUID GUID_NULL = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
 
-FVDialog::FVDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::FVDialog),
+FPDataV::FPDataV(const DATA_BLOB &data, QObject *parent) :
+    QObject(parent),
     m_bDoLearning(FT_FALSE),
     m_hOperationVerify(0),
     m_fxContext(0),
     m_mcContext(0),
     matchFound(false)
 {
-    ui->setupUi(this);
-
+    dataCopy = data;
+    ::ZeroMemory(&m_RegTemplate, sizeof(m_RegTemplate));
     deviceInit();
-
-    textEditPalete.setColor(QPalette::Base, Qt::black); // set color "Red" for textedit base
-    textEditPalete.setColor(QPalette::Text, Qt::white); // set text color which is selected from color pallete
-    ui->textEdit->setPalette(textEditPalete);
-    setWindowIcon(QIcon(":/images/icon.jpg"));
 }
 
-FVDialog::~FVDialog()
+FPDataV::~FPDataV()
 {
     if (m_hOperationVerify) {
         DPFPStopAcquisition(m_hOperationVerify);    // No error checking - what can we do at the end anyway?
@@ -57,14 +46,13 @@ FVDialog::~FVDialog()
         m_mcContext = 0;
     }
 
-    delete [] m_RegTemplate.pbData;
+    delete[] m_RegTemplate.pbData;
     m_RegTemplate.cbData = 0;
     m_RegTemplate.pbData = NULL;
 
-    delete ui;
 }
 
-void FVDialog::loadRegTemplate(const DATA_BLOB& rRegTemplate) {
+void FPDataV::loadRegTemplate(const DATA_BLOB& rRegTemplate) {
     // Delete the old stuff that may be in the template.
     delete [] m_RegTemplate.pbData;
     m_RegTemplate.pbData = NULL;
@@ -77,122 +65,10 @@ void FVDialog::loadRegTemplate(const DATA_BLOB& rRegTemplate) {
     m_RegTemplate.cbData = rRegTemplate.cbData;
 }
 
-
-bool FVDialog::nativeEvent(const QByteArray &eventType, void *message, long *result)
-{
-
-    Q_UNUSED(result);
-    Q_UNUSED(eventType);
-
-    MSG *msg = static_cast<MSG*> (message);
-    if(msg->message != 1025) return 0;
-
-     ui->textEdit->setTextColor(QColor(Qt::white));
-
-    switch(msg->wParam) {
-        case WN_COMPLETED: {
-            addStatus("Fingerprint image captured");
-
-            DATA_BLOB* pImageBlob = reinterpret_cast<DATA_BLOB*>(msg->lParam);
-
-            // Display fingerprint image
-            displayFingerprintImage(pImageBlob);//->pbData);
-
-            // Match the new fingerprint image and Enrollment template
-            verify(pImageBlob->pbData, pImageBlob->cbData);
-            break;
-        }
-        case WN_ERROR: {
-            char buffer[101] = {0};
-            snprintf(buffer, 100, "Error happened. Error code: 0x%X", msg->lParam);
-            addStatus(buffer);
-            break;
-        }
-        case WN_DISCONNECT:
-            ui->textEdit->setTextColor(QColor(Qt::red));
-            addStatus("Fingerprint reader disconnected");
-            break;
-        case WN_RECONNECT:
-            ui->textEdit->setTextColor(QColor(Qt::green));
-            addStatus("Fingerprint reader connected");
-            break;
-        case WN_FINGER_TOUCHED:
-            ui->textEdit->setTextColor(QColor(Qt::darkYellow));
-            addStatus("Finger touched");
-            break;
-        case WN_FINGER_GONE:
-            ui->textEdit->setTextColor(QColor(Qt::magenta));
-            addStatus("Finger gone");
-            break;
-        case WN_IMAGE_READY:
-            ui->textEdit->setTextColor(QColor(Qt::darkYellow));
-            addStatus("Fingerprint image ready");
-            break;
-        case WN_OPERATION_STOPPED:
-            ui->textEdit->setTextColor(QColor(Qt::red));
-            addStatus("Fingerprint Verification Operation stopped");
-            break;
-    }
-    return 0;
-
-}
-
-DPFP_STDAPI DPFPConvertSampleToBitmap(const DATA_BLOB* pSample, PBYTE pBitmap, size_t* pSize);
-void FVDialog::displayFingerprintImage(const DATA_BLOB *pFingerprintImage)
-{
-    HRESULT hr = S_OK;
-    PBITMAPINFO pOutBmp = NULL;
-    try {
-        size_t Size = 0;
-        hr = DPFPConvertSampleToBitmap(pFingerprintImage, 0, &Size);
-        pOutBmp = (PBITMAPINFO)new BYTE[Size];
-        hr = DPFPConvertSampleToBitmap(pFingerprintImage, (PBYTE)pOutBmp, &Size);
-
-        if (SUCCEEDED(hr)) {
-            size_t dwColorsSize = pOutBmp->bmiHeader.biClrUsed * sizeof(PALETTEENTRY);
-            const BYTE* pBmpBits = (PBYTE)pOutBmp + sizeof(BITMAPINFOHEADER) + dwColorsSize;
-
-            // Create bitmap and set its handle to the control for display.
-
-            h_bmpWidget.resize(ui->labelImage->size());
-            HDC hdcScreen = GetDC((HWND) h_bmpWidget.winId());
-            HDC hdcMem = CreateCompatibleDC(hdcScreen);
-
-            HBITMAP hBmp = CreateCompatibleBitmap(hdcScreen, ui->labelImage->width(), ui->labelImage->height());
-            SelectObject(hdcMem, hBmp);
-
-
-            int i = StretchDIBits(hdcMem, 0, 0, h_bmpWidget.width(), h_bmpWidget.height(), 0, 0, pOutBmp->bmiHeader.biWidth, pOutBmp->bmiHeader.biHeight, pBmpBits, pOutBmp, DIB_RGB_COLORS, SRCCOPY);
-            int j = BitBlt(hdcScreen, 0, 0, h_bmpWidget.width(), h_bmpWidget.height(), hdcMem, 0, 0, SRCCOPY);
-
-            /* produce image here */
-            QPixmap pixmap = QtWin::fromHBITMAP(hBmp);
-            ui->labelImage->setPixmap(pixmap);
-//            pixmap.toImage().save("newImage.bmp");
-
-            DeleteDC(hdcMem);
-            ReleaseDC((HWND)h_bmpWidget.winId(), hdcScreen);
-
-        }
-        delete [] (PBYTE)pOutBmp;
-    }
-    catch(_com_error E) {
-        hr = E.Error();
-        qDebug("exception found 1");
-    }
-    catch(...) {
-        hr = E_UNEXPECTED;
-        qDebug("exception found 2");
-    }
-
-}
-
-
-void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) {
+void FPDataV::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) {
     HRESULT hr = S_OK;
     matchFound = false;
     FT_BYTE* pVerTemplate = NULL;
-    ui->textEdit->setTextColor(QColor(Qt::white));
 
     try {
         FT_RETCODE rc = FT_OK;
@@ -245,29 +121,24 @@ void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) 
                     char buffer[101] = {0};
                     ULONG uSize = 100;
                     snprintf(buffer, uSize, "Warning: %ld (see dpRCodes.h)", rc);
-                    ui->textEdit->setTextColor(QColor(Qt::red));
-                    addStatus(buffer);
+                    qDebug() << buffer;
                 }
 
                 if (bVerified == FT_TRUE) {
-                    ui->textEdit->setTextColor(QColor(Qt::green));
-                    addStatus("Fingerprint Matches!");
-                    ui->lineEditPrompt->setText("Scan another finger to run verification again.");
+                    qDebug() << "Fingerprint Matches!";
                     char buffer[101] = {0};
                     ULONG uSize = 100;
                     snprintf(buffer, uSize, "%lf", dFalseAcceptProbability);
-                    ui->lineEditProbability->setText(buffer);
+                    qDebug() << buffer;
                     matchFound = true;
                     qDebug("Fingerprint Matches!");
                 }
                 else {
-                    ui->textEdit->setTextColor(QColor(Qt::red));
-                    addStatus("Fingerprint did not Match!");
-                    ui->lineEditPrompt->setText("Scan another finger to run verification again.");
+                    qDebug() << "Fingerprint did not Match!";
                     char buffer[101] = {0};
                     ULONG uSize = 100;
                     snprintf(buffer, uSize, "%lf", dFalseAcceptProbability);
-                    ui->lineEditProbability->setText(buffer);
+                    qDebug() << buffer;
                     matchFound = false;
                     qDebug("Fingerprint did not Match!");
                 }
@@ -276,8 +147,10 @@ void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) 
                 char buffer[101] = {0};
                 ULONG uSize = 100;
                 snprintf(buffer, uSize, "Verification Operation failed, Error: %ld.", rc);
-                QMessageBox::critical(this, "Fingerprint Verification", buffer, QMessageBox::Ok | QMessageBox::Escape);
-                 ui->lineEditPrompt->setText("Scan your finger for verification again.");
+                qDebug() << buffer;
+#ifdef QT_DEBUG
+                qDebug() << "Scan your finger for verification again.";
+#endif
                  matchFound = false;
                  qDebug("Fingerprint Verification.");
             }
@@ -292,14 +165,7 @@ void FVDialog::verify(FT_IMAGE_PT pFingerprintImage, int iFingerprintImageSize) 
     delete [] pVerTemplate;
 }
 
-void FVDialog::addStatus(const QString &status)
-{
-    ui->textEdit->append(status);
-    QScrollBar *sb = ui->textEdit->verticalScrollBar();
-    sb->setValue(sb->maximum());
-}
-
-int FVDialog::verifyAll(const DATA_BLOB& dataBlob)
+int FPDataV::verifyAll(/*const DATA_BLOB& dataBlob*/)
 {
     matchFound = false;
     /* open the dir */
@@ -318,7 +184,7 @@ int FVDialog::verifyAll(const DATA_BLOB& dataBlob)
         QString fileName = fileInfo.absoluteFilePath();
         QFile fpFile(fileName);
         if(!fpFile.open(QIODevice::ReadOnly)) {
-            QMessageBox::critical(this, "Fingerprint verification", fpFile.errorString(), QMessageBox::Close);
+            qDebug() << fpFile.errorString();
             return -1;
         }
         DWORD dwSize = fpFile.size();
@@ -346,7 +212,7 @@ int FVDialog::verifyAll(const DATA_BLOB& dataBlob)
         /* calling verification method with the features gotten from Enrolling Diaoolog
             and implicitly matches it with all the .fpt s'
         */
-        verify(dataBlob.pbData, dataBlob.cbData);
+        verify(dataCopy.pbData, dataCopy.cbData);
         if(matchFound)
         {
             break; //if match is found break the loop and return the match status
@@ -356,13 +222,13 @@ int FVDialog::verifyAll(const DATA_BLOB& dataBlob)
     return matchFound;
 }
 
-void FVDialog::onTimeout()
+void FPDataV::onTimeout()
 {
     qDebug() << "from the verify thread" << QThread::currentThreadId();
 }
 
 
-void FVDialog::deviceInit()
+void FPDataV::deviceInit()
 {
     HRESULT hr = S_OK;
     try {
@@ -370,17 +236,11 @@ void FVDialog::deviceInit()
 
         // Create Context for Feature Extraction
         if (FT_OK != (rc = FX_createContext(&m_fxContext))) {
-            QMessageBox::critical(this, "Fingerprint Verification", "Cannot create Feature Extraction Context.",
-                                  QMessageBox::Close|QMessageBox::Escape);
-            this->close();
             return;  // return TRUE  unless you set the focus to a control
         }
 
         // Create Context for Matching
         if (FT_OK != (rc = MC_createContext(&m_mcContext))) {
-            QMessageBox::critical(this, "Fingerprint Verification", "Cannot create Matching Context.",
-                                  QMessageBox::Close|QMessageBox::Escape);
-            this->close();
             return;  // return TRUE  unless you set the focus to a control
         }
 
@@ -407,7 +267,6 @@ void FVDialog::deviceInit()
             throw -7;
         }
 
-        ui->lineEditPrompt->setText("Scan your finger for verification.");
     }
     catch(_com_error& E) {
         hr = E.Error();
@@ -417,8 +276,5 @@ void FVDialog::deviceInit()
     }
 
     if (FAILED(hr)) {
-        ui->lineEditPrompt->setText("Error happened");
-        QMessageBox::critical(this, "Fingerprint Verification", "Verification error", QMessageBox::Close|QMessageBox::Escape);
-        this->close();
     }
 }

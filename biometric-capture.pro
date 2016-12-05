@@ -21,7 +21,8 @@ SOURCES += main.cpp \
     runguard.cpp \
     xmlreadwrite.cpp \
     gitprocessdialog.cpp \
-    verifyworker.cpp
+    verifyworker.cpp \
+    fpdatav.cpp
 
 HEADERS  += \
     evdialog.h \
@@ -31,7 +32,8 @@ HEADERS  += \
     runguard.h \
     xmlreadwrite.h \
     gitprocessdialog.h \
-    verifyworker.h
+    verifyworker.h \
+    fpdatav.h
 
 FORMS += \
     evdialog.ui \

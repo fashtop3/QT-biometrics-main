@@ -1,4 +1,5 @@
 #include "evdialog.h"
+#include "fpdatav.h"
 #include "gitprocessdialog.h"
 #include "ui_evdialog.h"
 #include "verifyworker.h"
@@ -99,7 +100,7 @@ void EVDialog::on_pushButtonEnrollment_clicked()
 {
 //    onFileChanged(); //just for debug
 
-//    onPullFinished(false);
+    onPullFinished(false); return;
 
     /* Create fingerprint Enrollement dialog */
     FEDialog dialog;
@@ -147,44 +148,47 @@ void EVDialog::onPullFinished(bool isError)
 
         qDebug() << "From the main thread: " << QThread::currentThreadId();
 
-        progDialog = new QProgressDialog(this);
-        VerifyWorker worker(raw_RegTemplate);
-        worker.moveToThread(&workerThread);
 
-        connect(this, SIGNAL(startVerification()), &worker, SLOT(onStartVerification()));
-        connect(&worker, static_cast<void (VerifyWorker::*)(bool)> (&VerifyWorker::verifyComplete),
-                this, static_cast<void (EVDialog::*)(bool)> (&EVDialog::onVerifyComplete) );
-        connect(&worker, SIGNAL(verifyComplete(bool)), progDialog, SLOT(close()));
+//        progDialog = new QProgressDialog(this);
+//        VerifyWorker worker(raw_RegTemplate);
+//        worker.moveToThread(&workerThread);
 
-
-        workerThread.start();
-        emit startVerification();
+//        connect(this, SIGNAL(startVerification()), &worker, SLOT(onStartVerification()));
+//        connect(&worker, static_cast<void (VerifyWorker::*)(bool)> (&VerifyWorker::verifyComplete),
+//                this, static_cast<void (EVDialog::*)(bool)> (&EVDialog::onVerifyComplete) );
+//        connect(&worker, SIGNAL(verifyComplete(bool)), progDialog, SLOT(close()));
 
 
-        progDialog->setLabelText("Verifying fingerpring... Please do not close this dialog!");
-        progDialog->setValue(40);
-        progDialog->activateWindow();
-        progDialog->setModal(true);
-        progDialog->exec();
+//        workerThread.start();
+//        emit startVerification();
+
+
+//        progDialog->setLabelText("Verifying fingerpring... Please do not close this dialog!");
+//        progDialog->setValue(40);
+//        progDialog->activateWindow();
+//        progDialog->setModal(true);
+//        progDialog->exec();
 
         /* pass the raw template to verify with all existing saved .fpt files*/
-//        if(fvdialog.verifyAll(raw_RegTemplate))
-//        {
-//            xml.setStatusCode("401");
-//            xml.setStatus("Fingerprint already exists!!!!");
-//            xml.setCaptured("0");
-//            xml.writeXML();
-//            QMessageBox::critical(this, "Fingerprint verification", "Process terminated!!! Fingerprint match found!.", QMessageBox::Close);
-//        }
-//        else{
-//            //copy the file from temp ../ with the req ID
-//            QString newName = getFPTFilePath("_" + xml.data().value("id") + "_.fpt");
-//            qDebug() << getFPTTempFilePath("temp.fpt");
-//            QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
+//        FVDialog fvdialog;
+        FPDataV fvdialog;
+        if(fvdialog.verifyAll(raw_RegTemplate))
+        {
+            xml.setStatusCode("401");
+            xml.setStatus("Fingerprint already exists!!!!");
+            xml.setCaptured("0");
+            xml.writeXML();
+            QMessageBox::critical(this, "Fingerprint verification", "Process terminated!!! Fingerprint match found!.", QMessageBox::Close);
+        }
+        else{
+            //copy the file from temp ../ with the req ID
+            QString newName = getFPTFilePath("_" + xml.data().value("id") + "_.fpt");
+            qDebug() << getFPTTempFilePath("temp.fpt");
+            QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
 
-//            /* Push all captured fingerprint templates to the remote server */
-//            GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
-//        }
+            /* Push all captured fingerprint templates to the remote server */
+            GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
+        }
     }
     else{ //when exec return false
         /* get the template raedy for OnVerification button clicked */

@@ -29,7 +29,7 @@ public:
 
     bool unlock();
     bool isLocked();
-    const QByteArray &readAll();
+    QByteArray readData();
 signals:
 
 public slots:

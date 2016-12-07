@@ -159,7 +159,7 @@ bool XmlReadWrite::isLocked()
     return lockControl.exists();
 }
 
-const QByteArray &XmlReadWrite::readAll()
+QByteArray XmlReadWrite::readData()
 {
     return file.readAll();
 }

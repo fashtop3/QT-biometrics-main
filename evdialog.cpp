@@ -41,6 +41,7 @@ EVDialog::~EVDialog()
 {
     /* unlock the capture.xml file to allow new req */
     xml.unlock();
+    removeLockFiles(); //force remove *.lock files
 
     delete [] m_RegTemplate.pbData;
     m_RegTemplate.cbData = 0;
@@ -229,7 +230,7 @@ void EVDialog::onPushFinished(bool isError)
     QApplication::closeAllWindows();
 }
 
-void EVDialog::on_pushButtonClearError_clicked()
+void EVDialog::removeLockFiles()
 {
     QDir dir(QCoreApplication::applicationDirPath() + "/Apache24/cgi-bin");
     dir.setFilter(QDir::Files|QDir::NoDotAndDotDot);
@@ -240,6 +241,12 @@ void EVDialog::on_pushButtonClearError_clicked()
         QFile lockedFile(fileInfo.absoluteFilePath());
         lockedFile.remove();
     }
+}
+
+void EVDialog::on_pushButtonClearError_clicked()
+{
+    removeLockFiles();
 
     QMessageBox::information(this, "Clear Error", "Lock files has been released", QMessageBox::Ok);
+    QApplication::closeAllWindows();
 }

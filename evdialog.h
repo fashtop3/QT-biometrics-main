@@ -33,6 +33,9 @@ public slots:
     void onVerifyComplete(bool isMatched);
 
 
+protected:
+    void removeLockFiles();
+
 private slots:
 
     void on_pushButtonEnrollment_clicked();

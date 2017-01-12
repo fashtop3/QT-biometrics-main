@@ -12,6 +12,11 @@
 #include <QProcess>
 #include <QSettings>
 #include <QTimer>
+#include <QNetworkRequest>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include "fptpath.h"
 
 Q_DECLARE_METATYPE(DATA_BLOB);
@@ -29,6 +34,8 @@ EVDialog::EVDialog(QWidget *parent) :
 
     /* set flag to alway show on top */
 //    setAttribute(Qt::WA_ShowWithoutActivating);
+
+    fpJsonObject = 0;
 
     QSettings settings("Dynamic Drive Technology", "DDTFPBiometric");
 
@@ -52,7 +59,7 @@ EVDialog::~EVDialog()
     workerThread.quit();
     workerThread.wait();
 
-    delete ui;
+    delete ui, fpJsonObject;
 }
 
 /**
@@ -72,7 +79,8 @@ void EVDialog::onFileChanged()
     settings.setValue("studReqID", xml.data().value("id"));
 
     /* lunch fetc update dialog */
-    GitProcessDialog::fetchUpdates(this);
+//    GitProcessDialog::fetchUpdates(this);
+    //TODO: do json update
 }
 
 void EVDialog::onVerifyComplete(bool isMatched)
@@ -93,7 +101,8 @@ void EVDialog::onVerifyComplete(bool isMatched)
         QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
 
         /* Push all captured fingerprint templates to the remote server */
-        GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
+//        GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
+        //TODO: post sample to server
     }
 }
 
@@ -101,7 +110,7 @@ void EVDialog::on_pushButtonEnrollment_clicked()
 {
 //    onFileChanged(); //just for debug
 
-//    onPullFinished(false); return;
+    onPullFinished(false); return;
 
     /* Create fingerprint Enrollement dialog */
     FEDialog dialog;
@@ -114,13 +123,18 @@ void EVDialog::on_pushButtonEnrollment_clicked()
 
     dialog.exec();
 
-    dialog.getRegTemplate(m_RegTemplate);
+    if(dialog.isTemplateReady()) {
+        fpJsonObject = new QJsonObject;
+        dialog.getRegTemplate(fpJsonObject);
+    }
+
+
 }
 
 void EVDialog::on_pushButtonVerification_clicked()
 {
     /* verify if there is a copy of finger template */
-    if (m_RegTemplate.cbData == 0 || m_RegTemplate.pbData == NULL) {
+    if (fpJsonObject == 0) {
         QMessageBox::critical(this, "Fingerprint Verification",
                               "Before attempting fingerprint verification, you must either select \"Fingerprint Enrollment\" to create a Fingerprint Enrollment Template, or read a previously saved template using \"Read Fingerprint Enrollment Template\".",
                               QMessageBox::Ok|QMessageBox::Escape);
@@ -129,8 +143,9 @@ void EVDialog::on_pushButtonVerification_clicked()
 
     FVDialog dialog;
     /* Load a copyt template for verification */
-    dialog.loadRegTemplate(m_RegTemplate);
+    dialog.loadRegTemplate(fpJsonObject/*m_RegTemplate*/);
     dialog.exec();
+    fpJsonObject = 0;
 }
 
 void EVDialog::onPullFinished(bool isError)
@@ -138,10 +153,12 @@ void EVDialog::onPullFinished(bool isError)
     qRegisterMetaType<DATA_BLOB>("DATA_BLOB");
     qDebug() << "Calling pull finished" << isError;
 
+    fpJsonObject = new QJsonObject;
+
     /* get values from QSettings */
     QString winTitle = "FPT-[" + settings.value("studName").toString() + "]-[" + settings.value("studReqID").toString() + "]";
 
-    /* Create finger pting verification dialog */
+    /* Create finger print verification dialog */
     feDialog = new FEDialog(this);
     feDialog->setWindowTitle(winTitle);
     feDialog->setModal(true);
@@ -189,13 +206,28 @@ void EVDialog::onPullFinished(bool isError)
                                       QMessageBox::Close);
             }
             else{
-                //copy the file from temp ../ with the req ID
-                QString newName = getFPTFilePath("_" + xml.data().value("id") + "_.fpt");
-                qDebug() << getFPTTempFilePath("temp.fpt");
-                QFile::rename(getFPTTempFilePath("temp.fpt"), newName);
 
-                /* Push all captured fingerprint templates to the remote server */
-                GitProcessDialog::pushUpdates(xml.data().value("name"), xml.data().value("id"), this);
+                //TODO: task completed
+                //TODO: post data to the server
+
+                QNetworkRequest request(QUrl("http://localhost:8000/data"));
+                request.setHeader(QNetworkRequest::ContentTypeHeader, /*"application/x-www-form-urlencoded"*/ "application/json");
+
+                /* get the template raedy for OnVerification button clicked */
+                fpJsonObject->insert("cid", QJsonValue::fromVariant(xml.data().value("id")));
+                feDialog->getRegTemplate(fpJsonObject);
+
+                QNetworkAccessManager man;
+                qDebug() << "Posting Data: " << QJsonDocument(*fpJsonObject).toJson().data();
+//                QNetworkReply *reply = man.post(request, QJsonDocument(*fpJsonObject).toJson());
+
+//                while(!reply->isFinished())
+//                {
+//                    qApp->processEvents();
+//                }
+
+//                qDebug() << "Server Response: " << reply->readAll().data();
+
             }
 
             delete fpWorker; //delete the worker class to allow on next open
@@ -213,7 +245,7 @@ void EVDialog::onPullFinished(bool isError)
     feDialog->exec();
 
         /* get the template raedy for OnVerification button clicked */
-        feDialog->getRegTemplate(m_RegTemplate);
+        feDialog->getRegTemplate(fpJsonObject);
 
     delete feDialog;//, thread;
 }

@@ -64,17 +64,20 @@ FVDialog::~FVDialog()
     delete ui;
 }
 
-void FVDialog::loadRegTemplate(const DATA_BLOB& rRegTemplate) {
+void FVDialog::loadRegTemplate(const QJsonObject* fpJsonObj) {
     // Delete the old stuff that may be in the template.
     delete [] m_RegTemplate.pbData;
     m_RegTemplate.pbData = NULL;
     m_RegTemplate.cbData = 0;
 
-    // Copy Enrollment template data into member of this class
-    m_RegTemplate.pbData = new BYTE[rRegTemplate.cbData];
+    /**
+     * @brief pdata:: convert Json string to bytearray and fromBase64
+     */
+    QByteArray pdata = QByteArray::fromBase64(fpJsonObj->value("pbdata").toVariant().toByteArray());
+    m_RegTemplate.pbData = new BYTE[fpJsonObj->value("cbdata").toInt()];
     if (!m_RegTemplate.pbData) _com_issue_error(E_OUTOFMEMORY);
-    ::CopyMemory(m_RegTemplate.pbData, rRegTemplate.pbData, rRegTemplate.cbData);
-    m_RegTemplate.cbData = rRegTemplate.cbData;
+    ::CopyMemory(m_RegTemplate.pbData, (BYTE *) pdata.data() , fpJsonObj->value("cbdata").toInt());
+    m_RegTemplate.cbData = fpJsonObj->value("cbdata").toInt();
 }
 
 

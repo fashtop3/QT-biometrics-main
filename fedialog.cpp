@@ -97,6 +97,11 @@ FEDialog::~FEDialog()
     m_RegTemplate.pbData = NULL;
 }
 
+const bool FEDialog::isTemplateReady() const
+{
+    return hasReadyTemplate;
+}
+
 QPushButton *FEDialog::nextButtonPtr()
 {
     return ui->pushButtonNext;
@@ -445,18 +450,16 @@ bool FEDialog::writeFile(const QString &fileName)
 }
 
 
-void FEDialog::getRegTemplate(DATA_BLOB& rRegTemplate) const {
+void FEDialog::getRegTemplate(QJsonObject* fpJsonObj) const {
     if (hasReadyTemplate/*m_RegTemplate.cbData && m_RegTemplate.pbData*/) { // only copy template if it is not empty
-        // Delete the old stuff that may be in the template.
-        delete [] rRegTemplate.pbData;
-        rRegTemplate.pbData = NULL;
-        rRegTemplate.cbData = 0;
 
-        // Copy the new template, but only if it has been created.
-        rRegTemplate.pbData = new BYTE[m_RegTemplate.cbData];
-        if (!rRegTemplate.pbData) _com_issue_error(E_OUTOFMEMORY);
-        ::CopyMemory(rRegTemplate.pbData, m_RegTemplate.pbData, m_RegTemplate.cbData);
-        rRegTemplate.cbData = m_RegTemplate.cbData;
+        QByteArray fpTemplate((const char*)m_RegTemplate.pbData, m_RegTemplate.cbData);
+
+
+        fpJsonObj->insert("pbdata", QJsonValue::fromVariant(fpTemplate.toBase64(QByteArray::Base64Encoding)));
+        fpJsonObj->insert("cbdata", QJsonValue::fromVariant(fpTemplate.size()));
+//QByteArray::KeepTrailingEquals
+        qDebug() << "Enrolling Reg Template in base63: " << fpTemplate.toBase64(QByteArray::Base64Encoding).data();
     }
 }
 

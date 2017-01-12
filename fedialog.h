@@ -23,6 +23,7 @@ public:
     ~FEDialog();
 
     void changeButtonText(const QString &str);
+    const bool isTemplateReady() const;
 
     QPushButton *nextButtonPtr();
     QProgressBar *progressBarPtr();
@@ -30,7 +31,7 @@ signals:
     void templateGenerated(bool gen);
 
 public slots:
-    void getRegTemplate(DATA_BLOB &rRegTemplate) const;
+    void getRegTemplate(QJsonObject *fpJsonObj) const;
     void closeInit();
 
     void initContext();

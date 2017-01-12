@@ -11,6 +11,7 @@
 #include "fvdialog.h"
 #include "xmlreadwrite.h"
 #include <QProgressDialog>
+#include <QJsonObject>
 
 namespace Ui {
 class EVDialog;
@@ -59,6 +60,8 @@ private:
     QThread workerThread;
     FEDialog *feDialog;
     FPDataV *fpWorker;
+
+    QJsonObject* fpJsonObject;
 };
 
 #endif // EVDIALOG_H

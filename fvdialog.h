@@ -2,6 +2,7 @@
 #define FVDIALOG_H
 
 #include <QDialog>
+#include <QJsonObject>
 #include "dpDefs.h"
 #include "dpRCodes.h"
 #include "DPDevClt.h"
@@ -26,7 +27,7 @@ signals:
     void verifyComplete(bool isMatchFound);
 
 public slots:
-    void loadRegTemplate(const DATA_BLOB &rRegTemplate);
+    void loadRegTemplate(const QJsonObject *fpJsonObj);
     int verifyAll(const DATA_BLOB &dataBlob);
     void onTimeout();
 

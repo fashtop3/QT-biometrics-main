@@ -202,13 +202,11 @@ int FPDataV::verifyAll(const DATA_BLOB& dataBlob)
 
     int run = 0;
     foreach (const QJsonValue & value, jsonArray) {
+
         QJsonObject obj = value.toObject();
 
         QByteArray pdata = QByteArray::fromBase64(QByteArray(obj["pbdata"].toVariant().toByteArray()));
-
-        qDebug() /*<< obj["pbdata"].toVariant().toByteArray().data()*/ << "from base size: " << pdata.size() ;
-
-
+//        qDebug() /*<< obj["pbdata"].toVariant().toByteArray().data()*/ << "from base size: " << pdata.size() ;
         DWORD dwSize = pdata.size();
         BYTE buffer[dwSize];
         if(!buffer) {

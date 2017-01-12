@@ -207,9 +207,6 @@ void EVDialog::onPullFinished(bool isError)
             }
             else{
 
-                //TODO: task completed
-                //TODO: post data to the server
-
                 QNetworkRequest request(QUrl("http://localhost:8000/data"));
                 request.setHeader(QNetworkRequest::ContentTypeHeader, /*"application/x-www-form-urlencoded"*/ "application/json");
 
@@ -227,6 +224,9 @@ void EVDialog::onPullFinished(bool isError)
                 }
 
                 qDebug() << "Server Response: " << reply->readAll().data();
+
+
+                onPushFinished(false);
 
             }
 

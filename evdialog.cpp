@@ -218,15 +218,15 @@ void EVDialog::onPullFinished(bool isError)
                 feDialog->getRegTemplate(fpJsonObject);
 
                 QNetworkAccessManager man;
-                qDebug() << "Posting Data: " << QJsonDocument(*fpJsonObject).toJson().data();
-//                QNetworkReply *reply = man.post(request, QJsonDocument(*fpJsonObject).toJson());
+//                qDebug() << "Posting Data: " << QJsonDocument(*fpJsonObject).toJson().data();
+                QNetworkReply *reply = man.post(request, QJsonDocument(*fpJsonObject).toJson());
 
-//                while(!reply->isFinished())
-//                {
-//                    qApp->processEvents();
-//                }
+                while(!reply->isFinished())
+                {
+                    qApp->processEvents();
+                }
 
-//                qDebug() << "Server Response: " << reply->readAll().data();
+                qDebug() << "Server Response: " << reply->readAll().data();
 
             }
 

@@ -204,14 +204,33 @@ int FPDataV::verifyAll(const DATA_BLOB& dataBlob)
     foreach (const QJsonValue & value, jsonArray) {
         QJsonObject obj = value.toObject();
 
-        QByteArray pdata = QByteArray::fromBase64(QByteArray("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")/*obj["pbdata"].toVariant().toByteArray()*/);
+        QByteArray pdata = QByteArray::fromBase64(QByteArray(obj["pbdata"].toVariant().toByteArray()));
 
         qDebug() /*<< obj["pbdata"].toVariant().toByteArray().data()*/ << "from base size: " << pdata.size() ;
+
+
+        DWORD dwSize = pdata.size();
+        BYTE buffer[dwSize];
+        if(!buffer) {
+            #ifdef QT_DEBUG
+                qDebug("out of memory");
+            #endif
+            return -1;
+        }
+
+        //BUG: delete [] m_RegTemplate.pbData;
+        m_RegTemplate.pbData = {0};
+
+        m_RegTemplate.pbData = (BYTE *) pdata.data(); /*buffer*/;
+        m_RegTemplate.cbData = pdata.size();
+
+
         /**
          * calling verification method with the features gotten from Enrolling Diaoolog
          * and implicitly matches it with all the .fpt s'
          */
-        verify((BYTE *) pdata.data(), pdata.size());
+
+        verify(dataBlob.pbData, dataBlob.cbData);
         if(matchFound)
         {
             qDebug() << "match found";

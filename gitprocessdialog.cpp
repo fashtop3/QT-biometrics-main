@@ -63,7 +63,7 @@ void GitProcessDialog::fetchUpdates(EVDialog *parent)
     processDialog.setWindowTitle(winTitle);
     if(parent){ //connect pull signal to the main EVdialog onEvent
         connect(&processDialog, &GitProcessDialog::pullFinished,
-                parent, &parent->onPullFinished);
+                parent, /*&parent->*/&EVDialog::onPullFinished);
     }
     processDialog.pull();
     processDialog.setModal(true);
@@ -77,7 +77,7 @@ void GitProcessDialog::pushUpdates(const QString name, const QString id, EVDialo
     processDialog.setWindowTitle(winTitle);
     if(parent){ //connect push signal to the main EVdialog onEvent
         connect(&processDialog, &GitProcessDialog::pushFinished,
-                parent, &parent->onPushFinished);
+                parent, /*&parent->*/&EVDialog::onPushFinished);
     }
     processDialog.push(name, id);
     processDialog.setModal(true);

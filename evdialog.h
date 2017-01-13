@@ -33,6 +33,8 @@ public slots:
     void onFileChanged();
     void onVerifyComplete(bool isMatched);
 
+    void onPullFinished(bool isError);
+    void onPushFinished(bool isError);
 
 protected:
     void removeLockFiles();
@@ -42,9 +44,6 @@ private slots:
     void on_pushButtonEnrollment_clicked();
 
     void on_pushButtonVerification_clicked();
-
-    void onPullFinished(bool isError);
-    void onPushFinished(bool isError);
 
     void on_pushButtonClearError_clicked();
 

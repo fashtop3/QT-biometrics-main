@@ -326,7 +326,7 @@ int FVDialog::verifyAll(const DATA_BLOB& dataBlob)
         }
         DWORD dwSize = fpFile.size();
         DWORD dwNumRead = 0;
-        BYTE buffer[dwSize];
+        BYTE *buffer = new BYTE[dwSize];
         if(!buffer) {
             #ifdef QT_DEBUG
                 qDebug("out of memory");

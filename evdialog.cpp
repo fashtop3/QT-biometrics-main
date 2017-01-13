@@ -114,7 +114,7 @@ void EVDialog::on_pushButtonEnrollment_clicked()
 
     /* Create fingerprint Enrollement dialog */
     FEDialog dialog;
-    connect(&dialog, static_cast<void (FEDialog::*)(bool)>(feDialog->templateGenerated), [&dialog](bool gen){
+    connect(&dialog, static_cast<void (FEDialog::*)(bool)>(/*feDialog->*/&FEDialog::templateGenerated), [&dialog](bool gen){
         if(gen){
             QMessageBox::information(&dialog, "Fingerprint Enrollment", "Template Available for test verification", QMessageBox::Ok);
             dialog.close();
@@ -140,6 +140,7 @@ void EVDialog::on_pushButtonVerification_clicked()
                               QMessageBox::Ok|QMessageBox::Escape);
         return;
     }
+    return;
 
     FVDialog dialog;
     /* Load a copyt template for verification */
@@ -164,12 +165,13 @@ void EVDialog::onPullFinished(bool isError)
     feDialog->setModal(true);
 
     /*connect fingerprint template generated to enable next button*/
-    connect(feDialog, static_cast<void (FEDialog::*)(bool)>(feDialog->templateGenerated), [this](bool gen){
+    connect(feDialog, static_cast<void (FEDialog::*)(bool)>(/*feDialog->*/&FEDialog::templateGenerated), [this](bool gen){
         feDialog->nextButtonPtr()->setEnabled(gen);
     });
 
+
     /*when next button is clicked*/
-    connect(feDialog->nextButtonPtr(), &feDialog->nextButtonPtr()->clicked, [this](){
+    connect(feDialog->nextButtonPtr(), static_cast<void (QPushButton::*)(bool)>(&QPushButton::clicked), [this](){
         /*reset progress bar*/
         feDialog->progressBarPtr()->reset();
         /* Close the Fingerprint Matching and Acuisition context to allow reinitialion in the FVDialod ctor */
@@ -186,7 +188,7 @@ void EVDialog::onPullFinished(bool isError)
         /*connect slot to start full verification*/
         connect(this, SIGNAL(startVerification(DATA_BLOB)), fpWorker, SLOT(onStartVerification(DATA_BLOB)));
         /*Connect/Get verification updates from the data class tp update the progress bar*/
-        connect(fpWorker, static_cast<void (FPDataV::*)(int run, int total)>(&fpWorker->progress),
+        connect(fpWorker, static_cast<void (FPDataV::*)(int run, int total)>(/*&fpWorker->*/&FPDataV::progress),
                 [this](int run, int total){
             int load = (run/total)*100;
             feDialog->progressBarPtr()->setVisible(1);
@@ -194,7 +196,7 @@ void EVDialog::onPullFinished(bool isError)
         });//
 
         /*Connect the anonymous function to the signal emmmited when varification complets*/
-        connect(fpWorker, static_cast<void (FPDataV::*)(bool isMatched)>(&fpWorker->done),
+        connect(fpWorker, static_cast<void (FPDataV::*)(bool isMatched)>(/*&fpWorker->*/&FPDataV::done),
                 [this](bool isMatched){
 
             if(isMatched) {
@@ -225,12 +227,10 @@ void EVDialog::onPullFinished(bool isError)
 
                 qDebug() << "Server Response: " << reply->readAll().data();
 
-
                 onPushFinished(false);
-
             }
 
-            delete fpWorker; //delete the worker class to allow on next open
+            fpWorker->deleteLater(); //delete the worker class to allow on next open
             workerThread.exit(0); //exit the thread to enable transfer of new data to thread
             workerThread.wait();
         });
@@ -240,6 +240,7 @@ void EVDialog::onPullFinished(bool isError)
         emit startVerification(raw_RegTemplate); //this signal prompts verification process
         feDialog->progressBarPtr()->setVisible(1);
         feDialog->nextButtonPtr()->setEnabled(0); //disable pusbutton
+
     });
 
     feDialog->exec();

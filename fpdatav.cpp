@@ -208,7 +208,7 @@ int FPDataV::verifyAll(const DATA_BLOB& dataBlob)
         QByteArray pdata = QByteArray::fromBase64(QByteArray(obj["pbdata"].toVariant().toByteArray()));
 //        qDebug() /*<< obj["pbdata"].toVariant().toByteArray().data()*/ << "from base size: " << pdata.size() ;
         DWORD dwSize = pdata.size();
-        BYTE buffer[dwSize];
+        BYTE *buffer = new BYTE[dwSize];
         if(!buffer) {
             #ifdef QT_DEBUG
                 qDebug("out of memory");

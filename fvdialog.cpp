@@ -66,8 +66,9 @@ FVDialog::~FVDialog()
 
 void FVDialog::loadRegTemplate(const QJsonObject* fpJsonObj) {
     // Delete the old stuff that may be in the template.
-    delete [] m_RegTemplate.pbData;
-    m_RegTemplate.pbData = NULL;
+//    if(m_RegTemplate.pbData != 0)
+//    delete [] m_RegTemplate.pbData;
+    m_RegTemplate.pbData = {0};
     m_RegTemplate.cbData = 0;
 
     /**

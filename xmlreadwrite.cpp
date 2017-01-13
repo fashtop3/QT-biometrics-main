@@ -131,6 +131,7 @@ bool XmlReadWrite::readXML(XmlReadWrite::FTYPE fileType)
 bool XmlReadWrite::setPath(const QString &path)
 {
     fPath = path;
+    return true;
 }
 
 const QString XmlReadWrite::getFileName() const

@@ -140,7 +140,6 @@ void EVDialog::on_pushButtonVerification_clicked()
                               QMessageBox::Ok|QMessageBox::Escape);
         return;
     }
-//    return;
 
     FVDialog dialog;
     /* Load a copyt template for verification */

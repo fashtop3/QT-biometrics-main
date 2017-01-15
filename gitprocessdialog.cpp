@@ -59,30 +59,30 @@ QString GitProcessDialog::winTitle = "FPT-[" + settings.value("studName").toStri
 
 void GitProcessDialog::fetchUpdates(EVDialog *parent)
 {
-    GitProcessDialog processDialog;
-    processDialog.setWindowTitle(winTitle);
-    if(parent){ //connect pull signal to the main EVdialog onEvent
-        connect(&processDialog, &GitProcessDialog::pullFinished,
-                parent, /*&parent->*/&EVDialog::onPullFinished);
-    }
-    processDialog.pull();
-    processDialog.setModal(true);
-    if(!processDialog.exec())
-        QApplication::closeAllWindows();
+//    GitProcessDialog processDialog;
+//    processDialog.setWindowTitle(winTitle);
+//    if(parent){ //connect pull signal to the main EVdialog onEvent
+//        connect(&processDialog, &GitProcessDialog::pullFinished,
+//                parent, /*&parent->*/&EVDialog::onPullFinished);
+//    }
+//    processDialog.pull();
+//    processDialog.setModal(true);
+//    if(!processDialog.exec())
+//        QApplication::closeAllWindows();
 }
 
 void GitProcessDialog::pushUpdates(const QString name, const QString id, EVDialog *parent)
 {
-    GitProcessDialog processDialog(parent);
-    processDialog.setWindowTitle(winTitle);
-    if(parent){ //connect push signal to the main EVdialog onEvent
-        connect(&processDialog, &GitProcessDialog::pushFinished,
-                parent, /*&parent->*/&EVDialog::onPushFinished);
-    }
-    processDialog.push(name, id);
-    processDialog.setModal(true);
-    if(!processDialog.exec())
-        QApplication::closeAllWindows();
+//    GitProcessDialog processDialog(parent);
+//    processDialog.setWindowTitle(winTitle);
+//    if(parent){ //connect push signal to the main EVdialog onEvent
+//        connect(&processDialog, &GitProcessDialog::pushFinished,
+//                parent, /*&parent->*/&EVDialog::onPushFinished);
+//    }
+//    processDialog.push(name, id);
+//    processDialog.setModal(true);
+//    if(!processDialog.exec())
+//        QApplication::closeAllWindows();
 }
 
 void GitProcessDialog::push(QString arg1, QString arg2)

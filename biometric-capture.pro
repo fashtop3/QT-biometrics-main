@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui winextras xml network
+QT       += core gui winextras xml webenginewidgets webchannel network
 CONFIG += c++14
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -22,7 +22,10 @@ SOURCES += main.cpp \
     xmlreadwrite.cpp \
     gitprocessdialog.cpp \
     verifyworker.cpp \
-    fpdatav.cpp
+    fpdatav.cpp \
+    mainwindow.cpp \
+    logindialog.cpp \
+    webview.cpp
 
 HEADERS  += \
     evdialog.h \
@@ -33,14 +36,19 @@ HEADERS  += \
     xmlreadwrite.h \
     gitprocessdialog.h \
     verifyworker.h \
-    fpdatav.h
+    fpdatav.h \
+    mainwindow.h \
+    logindialog.h \
+    webview.h
 
 FORMS += \
     evdialog.ui \
     fedialog.ui \
     fvdialog.ui \
     gitprocessdialog.ui \
-    verificationdialog.ui
+    verificationdialog.ui \
+    mainwindow.ui \
+    logindialog.ui
 
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../build-biometric-capture/ -lDPFPApi
@@ -72,6 +80,6 @@ INCLUDEPATH += $$PWD/../build-biometric-capture
 DEPENDPATH += $$PWD/../build-biometric-capture
 
 RESOURCES += \
-    resource.qrc
+    resources.qrc
 
 win32: LIBS += -lgdi32 -lCrypt32

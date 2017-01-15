@@ -3,5 +3,6 @@
         <file>images/HiRes.gif</file>
         <file>images/icon.jpg</file>
         <file>images/splash.jpg</file>
+        <file>index.html</file>
     </qresource>
 </RCC>

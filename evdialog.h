@@ -36,17 +36,6 @@ public slots:
     void onPullFinished(bool isError);
     void onPushFinished(bool isError);
 
-protected:
-    void removeLockFiles();
-
-private slots:
-
-    void on_pushButtonEnrollment_clicked();
-
-    void on_pushButtonVerification_clicked();
-
-    void on_pushButtonClearError_clicked();
-
 private:
     Ui::EVDialog *ui;
 

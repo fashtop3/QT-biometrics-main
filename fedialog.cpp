@@ -466,8 +466,10 @@ void FEDialog::getRegTemplate(QJsonObject* fpJsonObj) const {
 void FEDialog::getRawRegTemplate(DATA_BLOB& dataBlob) const {
     if (hasReadyTemplate/*m_RegTemplate.cbData && m_RegTemplate.pbData*/) { // only copy template if it is not empty
         // Delete the old stuff that may be in the template.
-        delete [] dataBlob.pbData;
+//        delete [] dataBlob.pbData;
+        dataBlob.pbData = {0};
         dataBlob.pbData = NULL;
+        qDebug() << dataBlob.cbData;
         dataBlob.cbData = 0;
 
         // Copy the new template, but only if it has been created.

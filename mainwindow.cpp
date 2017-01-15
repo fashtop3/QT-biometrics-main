@@ -6,6 +6,7 @@
 #include "DPDevClt.h"
 #include "dpFtrEx.h"
 #include "dpMatch.h"
+#include "networkdata.h"
 
 #include <QPushButton>
 #include <QMessageBox>
@@ -91,24 +92,18 @@ void MainWindow::startEnrollment()
                 QMessageBox::critical(this, "Fingerprint Verification", "Fingerpint match found!!! unable to proceed!.",
                                       QMessageBox::Close);
                 feDialog->done(QDialog::Rejected);
+                emit doneCapturing(fpJsonObject->value("cid").toString(), 400, "Fingerpint match found!!! unable to proceed!");
             }
             else{
-
-                QNetworkRequest request(QUrl("http://localhost:8000/api/data?api_token=HS4uAfbdFojM46vilOoGgEAJdnsy3u2LXWSJUbVfFf7BbwpXL9A8qK2ChAKq"));
-                request.setHeader(QNetworkRequest::ContentTypeHeader, /*"application/x-www-form-urlencoded"*/ "application/json");
 
                 /* get the template raedy for OnVerification button clicked */
                 feDialog->getRegTemplate(fpJsonObject);
 
-                QNetworkAccessManager man;
-                //                qDebug() << "Posting Data: " << QJsonDocument(*fpJsonObject).toJson().data();
-                QNetworkReply *reply = man.post(request, QJsonDocument(*fpJsonObject).toJson());
-
-                while(!reply->isFinished())
-                {
-                    qApp->processEvents();
-                }
-
+                /**
+                 * @brief reply get server response
+                 */
+                NetworkData networkData(this);
+                QNetworkReply *reply = networkData.postData(*fpJsonObject);
                 QString statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString();
                 QString statusText = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
 

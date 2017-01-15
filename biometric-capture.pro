@@ -25,7 +25,8 @@ SOURCES += main.cpp \
     fpdatav.cpp \
     mainwindow.cpp \
     logindialog.cpp \
-    webview.cpp
+    webview.cpp \
+    networkdata.cpp
 
 HEADERS  += \
     evdialog.h \
@@ -39,7 +40,8 @@ HEADERS  += \
     fpdatav.h \
     mainwindow.h \
     logindialog.h \
-    webview.h
+    webview.h \
+    networkdata.h
 
 FORMS += \
     evdialog.ui \

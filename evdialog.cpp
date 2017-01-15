@@ -46,15 +46,7 @@ EVDialog::EVDialog(QWidget *parent) :
 
 EVDialog::~EVDialog()
 {
-
-    delete [] m_RegTemplate.pbData;
-    m_RegTemplate.cbData = 0;
-    m_RegTemplate.pbData = NULL;
-
-    workerThread.quit();
-    workerThread.wait();
-
-    delete ui, fpJsonObject;
+    delete ui;
 }
 
 //TODO: copy this toimplement verification

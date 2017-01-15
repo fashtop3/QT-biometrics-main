@@ -25,21 +25,27 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     webView = new WebView(this);
     connect(webView, SIGNAL(initCapturing(QString)), this, SLOT(onInitCapturing(QString)));
-    connect(this, SIGNAL(doneCapturing(QString,int,QString)), webView, SLOT(onDoneCapturing(QString,int,QString)));
+    connect(this, SIGNAL(doneCapturing(QString,int,QString,QString&)),
+            webView, SLOT(onDoneCapturing(QString,int,QString,QString&)));
     setCentralWidget(webView);
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    m_RegTemplate.pbData = {0};
+    m_RegTemplate.cbData = 0;
+    m_RegTemplate.pbData = NULL;
+
+    workerThread.quit();
+    workerThread.wait();
+
+    delete ui, fpJsonObject;
 }
 
 void MainWindow::startEnrollment()
 {
 
     qRegisterMetaType<DATA_BLOB>("DATA_BLOB");
-
-    fpJsonObject = new QJsonObject;
 
     /* Create finger print verification dialog */
     feDialog = new FEDialog(this);
@@ -77,25 +83,21 @@ void MainWindow::startEnrollment()
             feDialog->progressBarPtr()->setValue(load);
         });//
 
-        /*Connect the anonymous function to the signal emmmited when varification complets*/
+        /*Connect the anonymous function to the signal emmited when varification complets*/
         connect(fpWorker, static_cast<void (FPDataV::*)(bool isMatched)>(/*&fpWorker->*/&FPDataV::done),
                 [this](bool isMatched){
 
             if(isMatched) {
-//                xml.setStatusCode("401");
-//                xml.setStatus("Fingerprint already exists!!!!");
-//                xml.setCaptured("0");
-//                xml.writeXML();
                 QMessageBox::critical(this, "Fingerprint Verification", "Fingerpint match found!!! unable to proceed!.",
                                       QMessageBox::Close);
+                feDialog->done(QDialog::Rejected);
             }
             else{
 
-                QNetworkRequest request(QUrl("http://localhost:8000/data"));
+                QNetworkRequest request(QUrl("http://localhost:8000/api/data?api_token=HS4uAfbdFojM46vilOoGgEAJdnsy3u2LXWSJUbVfFf7BbwpXL9A8qK2ChAKq"));
                 request.setHeader(QNetworkRequest::ContentTypeHeader, /*"application/x-www-form-urlencoded"*/ "application/json");
 
                 /* get the template raedy for OnVerification button clicked */
-                fpJsonObject->insert("cid", QJsonValue::fromVariant("878274uin"));
                 feDialog->getRegTemplate(fpJsonObject);
 
                 QNetworkAccessManager man;
@@ -107,9 +109,12 @@ void MainWindow::startEnrollment()
                     qApp->processEvents();
                 }
 
-                qDebug() << "Server Response: " << reply->readAll().data();
+                QString statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString();
+                QString statusText = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
 
-                doneCapturing("cid", 401, "responseText");
+                QString rData = reply->readAll().data();
+                emit doneCapturing(fpJsonObject->value("cid").toString(), statusCode.toInt(), statusText, rData);
+                feDialog->close();
             }
 
             fpWorker->deleteLater(); //delete the worker class to allow on next open
@@ -130,7 +135,7 @@ void MainWindow::startEnrollment()
     /* get the template raedy for OnVerification button clicked */
     feDialog->getRegTemplate(fpJsonObject);
 
-    delete feDialog;//, thread;
+    feDialog->deleteLater();//, thread;
 }
 
 void MainWindow::onInitCapturing(const QString cid)
@@ -152,8 +157,9 @@ void MainWindow::onInitCapturing(const QString cid)
        {
            if(FT_OK == MC_init())              //intialize sdk matching
            {
-               //call exec on evdialog
-               startEnrollment();
+               fpJsonObject = new QJsonObject;
+               fpJsonObject->insert("cid", QJsonValue::fromVariant(cid)); //store  cid sent from browser
+               startEnrollment();               //start enrollment dialog
 
                MC_terminate();                 // All MC_init  must be matched with MC_terminate to free up the resources
            }
@@ -176,6 +182,5 @@ void MainWindow::onInitCapturing(const QString cid)
        qDebug("An exception occurred. Devive not found. ");
        QMessageBox::critical(0, "Device Error", "An exception occurred. Devive not found. ",
                              QMessageBox::Close | QMessageBox::Escape);
-       return;
    }
 }

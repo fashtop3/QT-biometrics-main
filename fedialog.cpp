@@ -92,7 +92,7 @@ FEDialog::~FEDialog()
 
     delete ui;
 
-    delete [] m_RegTemplate.pbData;
+    m_RegTemplate.pbData = {0};
     m_RegTemplate.cbData = 0;
     m_RegTemplate.pbData = NULL;
 }

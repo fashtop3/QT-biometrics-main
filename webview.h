@@ -17,8 +17,8 @@ signals:
     void initCapturing(const QString cid);
 
 public slots:
-    void onDoneCapturing(const QString cid, int statusCode, const QString statusText);
-    void jsStartCapturing(const QString str);
+    void onDoneCapturing(const QString cid, int statusCode, const QString statusText, QString &data = QString());
+    void jsStartCapturing(const QString cid);
 
 private:
 

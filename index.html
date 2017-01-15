@@ -22,16 +22,13 @@
       }
 
       // function, can be called from C++ or from Javascript
-      function doneCapturing(cid, code, str) {
-        alert(cid, code, str);
+      function doneCapturing(cid, statusCode, statusText, responseData) {
+        alert(cid + " " + code + " " + str);
       }
 
       // Event handler for demonstration
       function on_capButton_click(ev) {
-        //var x = ev.clientX - canvas.offsetLeft ;
-        //var y = ev.clientY - canvas.offsetTop ;
-        //addDot(x, y, 8, '#FF0000') ;
-        callCpp("Calling from html page");
+        callCpp("98289789024");
       }
 
       // Javascript function passes parameter to C++

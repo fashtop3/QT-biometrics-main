@@ -184,7 +184,7 @@ int FPDataV::verifyAll(const DATA_BLOB& dataBlob)
     matchFound = false;
 
     //TODO: move this to a new network class
-    QNetworkRequest request(QUrl("http://localhost:8000/data"));
+    QNetworkRequest request(QUrl("http://localhost:8000/api/data?api_token=HS4uAfbdFojM46vilOoGgEAJdnsy3u2LXWSJUbVfFf7BbwpXL9A8qK2ChAKq"));
     request.setHeader(QNetworkRequest::ContentTypeHeader, /*"application/x-www-form-urlencoded"*/ "application/json");
 
     QNetworkAccessManager man;

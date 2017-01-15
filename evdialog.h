@@ -29,12 +29,6 @@ public:
 signals:
     void startVerification(const DATA_BLOB &blob);
 
-public slots:
-    void onFileChanged();
-    void onVerifyComplete(bool isMatched);
-
-    void onPullFinished(bool isError);
-    void onPushFinished(bool isError);
 
 private:
     Ui::EVDialog *ui;

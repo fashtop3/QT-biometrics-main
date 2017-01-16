@@ -6,11 +6,20 @@
 #include <QApplication>
 #include <QJsonDocument>
 #include <QDebug>
+#include <QFile>
+#include <QXmlStreamReader>
+#include <QSettings>
+#include <QUrlQuery>
 
 NetworkData::NetworkData(QObject *parent) : QObject(parent)
 {
 
-    request.setUrl(QUrl("http://localhost:8000/api/data?api_token=HS4uAfbdFojM46vilOoGgEAJdnsy3u2LXWSJUbVfFf7BbwpXL9A8qK2ChAKq"));
+    QSettings cnf("Dynamic Drive Technology");
+    QUrl url(cnf.value("conifg/server/api-url").toString());
+    QUrlQuery urlQuery(url);
+    urlQuery.addQueryItem("api_token", cnf.value("conifg/server/token").toString());
+
+    request.setUrl(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, /*"application/x-www-form-urlencoded"*/ "application/json");
 
     //                qDebug() << "Posting Data: " << QJsonDocument(*fpJsonObject).toJson().data();

@@ -14,6 +14,7 @@ public:
     QNetworkReply *postData(QJsonObject &fpJsonObject);
 
 signals:
+    void configFileError();
 
 public slots:
 

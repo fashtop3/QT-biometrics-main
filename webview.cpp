@@ -1,6 +1,7 @@
 #include "fedialog.h"
 #include "webview.h"
 #include <QMessageBox>
+#include <QSettings>
 
 WebView::WebView(QWidget *parent) :
     QWebEngineView(parent)
@@ -9,8 +10,11 @@ WebView::WebView(QWidget *parent) :
     this->page()->setWebChannel(&channel) ;
     channel.registerObject("widget", this) ;
 
+    QSettings cnf("Dynamic Drive Technology", "DDTFPBiometric");
+
+    qDebug() << cnf.value("conifg/server/main-url").toString();
     // Set the page content
-    setUrl(QUrl("qrc:/index.html"/*"http://localhost:8000/"*/));
+    setUrl(QUrl(cnf.value("conifg/server/main-url").toString()/*"qrc:/index.html"*//*"http://localhost:8000/"*/));
 }
 
 WebView::~WebView(){}

@@ -82,7 +82,6 @@ bool loadSettings()
     QFile file("./config.xml");
     if(!file.open(QIODevice::ReadOnly))
     {
-        //TODO: make a notice here
         QMessageBox::critical(0, "Configuration", "Failed to load configuration file. Pls contact administrator!.",
                               QMessageBox::Abort);
         return false;
@@ -90,7 +89,6 @@ bool loadSettings()
 
     QSettings cnf("Dynamic Drive Technology", "DDTFPBiometric");
     cnf.beginGroup("config");
-    cnf.beginGroup("server");
 
     /* QXmlStreamReader takes any QIODevice. */
     QXmlStreamReader xml(&file);
@@ -117,23 +115,22 @@ bool loadSettings()
             {
                 /* we don't need the element attr so shift the pointer to characters */
                 xml.readNext();
-                cnf.setValue("main-url", xml.text().toString());
+                cnf.setValue("server/main-url", xml.text().toString());
                 continue;
             }
 
             if(xml.name() == "api-url")
             {
                 /* get the attributes of the xml tag */
-                cnf.setValue("token", xml.attributes().value("token").toString());
+                cnf.setValue("server/token", xml.attributes().value("token").toString());
                 /* we don't need the element attr so shift the pointer to characters */
                 xml.readNext();
-                cnf.setValue("api-url", xml.text().toString());
+                cnf.setValue("server/api-url", xml.text().toString());
             }
 
         }
     }
 
-    cnf.endGroup();
     cnf.endGroup();
 
     return true;

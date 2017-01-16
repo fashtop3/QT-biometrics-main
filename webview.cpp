@@ -11,10 +11,10 @@ WebView::WebView(QWidget *parent) :
     channel.registerObject("widget", this) ;
 
     QSettings cnf("Dynamic Drive Technology", "DDTFPBiometric");
+    cnf.beginGroup("config");
 
-    qDebug() << cnf.value("conifg/server/main-url").toString();
     // Set the page content
-    setUrl(QUrl(cnf.value("conifg/server/main-url").toString()/*"qrc:/index.html"*//*"http://localhost:8000/"*/));
+    setUrl(QUrl(cnf.value("server/main-url").toString()/*"qrc:/index.html"*//*"http://localhost:8000/"*/));
 }
 
 WebView::~WebView(){}

@@ -14,10 +14,14 @@
 NetworkData::NetworkData(QObject *parent) : QObject(parent)
 {
 
-    QSettings cnf("Dynamic Drive Technology");
-    QUrl url(cnf.value("conifg/server/api-url").toString());
+    QSettings cnf("Dynamic Drive Technology", "DDTFPBiometric");
+    cnf.beginGroup("config");
+
+    QUrl url(cnf.value("server/api-url").toString());
     QUrlQuery urlQuery(url);
-    urlQuery.addQueryItem("api_token", cnf.value("conifg/server/token").toString());
+
+    urlQuery.addQueryItem("api_token", cnf.value("server/token").toString());
+    url.setQuery(urlQuery);
 
     request.setUrl(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, /*"application/x-www-form-urlencoded"*/ "application/json");

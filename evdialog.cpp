@@ -49,7 +49,7 @@ EVDialog::~EVDialog()
     delete ui;
 }
 
-//TODO: copy this toimplement verification
+//NOTE: copy this toimplement verification
 //void EVDialog::on_pushButtonVerification_clicked()
 //{
 //    /* verify if there is a copy of finger template */

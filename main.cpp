@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 //    bool xmlFileChanged = parser.isSet(xmlFileChangedOption);
 
 #ifndef QT_DEBUG
-    QPixmap pixmap(":/images/splash.jpg");
+    QPixmap pixmap(":/images/emis.png");
     QSplashScreen splash(pixmap);
     splash.show();
     I::sleep(2);

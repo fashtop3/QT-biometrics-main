@@ -28,15 +28,23 @@ void WebView::onDoneCapturing(const QString cid, int statusCode, const QString s
              .arg(data);
 
     page()->runJavaScript(command) ;
-    QMessageBox::information(this, "Fingerprint enrollment", "Fingerprint capture process completed!!!", QMessageBox::Ok);
 
-//#ifdef QT_DEBUG
-    //check response data with debug mode
+#ifdef QT_DEBUG
+    QMessageBox::information(this, "Fingerprint enrollment", "Fingerprint capture process completed!!!", QMessageBox::Ok);
+#endif
+
+//NOTE: this point is used for debug purpose
+#ifdef QT_DEBUG
+//    check response data with debug mode
 //    setHtml(data);
-//#endif
+    logView.setHtml(data);
+    logView.show();
+#endif
 }
 
 void WebView::jsStartCapturing(const QString cid)
 {
+    //NOTE: display user id when button clicked
+    qDebug() << "User Id: " << cid;
     emit initCapturing(cid);
 }

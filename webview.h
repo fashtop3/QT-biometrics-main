@@ -24,6 +24,8 @@ private:
 
     QWebChannel channel;
 
+    QWebEngineView logView;
+
 };
 
 #endif // WEBVIEW_H

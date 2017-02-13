@@ -12,17 +12,17 @@
 #ifndef TEMP_PATH
 static QString _FPT_PATH_()
 {
-    return QString(QCoreApplication::applicationDirPath() + "/.fpt");
+    return QString(QCoreApplication::applicationDirPath() + "/");
 }
 
 static QString getFPTFilePath(const QString &str)
 {
-    return QCoreApplication::applicationDirPath() + "/.fpt/" + str;
+    return QCoreApplication::applicationDirPath() + "/" + str;
 }
 
 static QString getFPTTempFilePath(const QString &str)
 {
-    return QCoreApplication::applicationDirPath() + "/.fpt/temp/" + str;
+    return QCoreApplication::applicationDirPath() + "/" + str;
 }
 #endif
 

@@ -9,8 +9,13 @@ CONFIG += c++14
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-#TARGET = ../DDTFPBiometric
-TARGET = ../../biometric-installer/packages/com.main.product/data/DDTFPBiometric
+
+CONFIG(debug, debug|release) {
+    TARGET = ../../biometric-installer/packages/com.main.product/data/DDTFPBiometric
+} else {
+    TARGET = DDTFPBiometric
+}
+
 TEMPLATE = app
 
 

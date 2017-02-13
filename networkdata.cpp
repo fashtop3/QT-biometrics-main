@@ -17,6 +17,7 @@ NetworkData::NetworkData(QObject *parent) : QObject(parent)
     QSettings cnf("Dynamic Drive Technology", "DDTFPBiometric");
     cnf.beginGroup("config");
 
+
     QUrl url(cnf.value("server/api-url").toString());
     QUrlQuery urlQuery(url);
 
@@ -27,6 +28,11 @@ NetworkData::NetworkData(QObject *parent) : QObject(parent)
     request.setHeader(QNetworkRequest::ContentTypeHeader, /*"application/x-www-form-urlencoded"*/ "application/json");
 
     //                qDebug() << "Posting Data: " << QJsonDocument(*fpJsonObject).toJson().data();
+
+#ifdef QT_DEBUG
+    //NOTE: this point is used for debug purpose
+    qDebug() << "Calling api url" << url.toString();
+#endif
 }
 
 

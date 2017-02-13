@@ -27,6 +27,7 @@ public:
 signals:
     void startVerification(const DATA_BLOB &blob);
     void doneCapturing(const QString cid, int statusCode, const QString statusText, QString &responseData = QString());
+    void loadFinished(bool ok);
 
 private slots:
     void onInitCapturing(const QString cid);

@@ -53,24 +53,24 @@ int main(int argc, char *argv[])
     QPixmap pixmap(":/images/emis.png");
     QSplashScreen splash(pixmap);
     splash.show();
-    I::sleep(2);
+//    I::sleep(2);
     splash.activateWindow();
-    I::sleep(1); // splash is shown for 5 seconds
 #endif
 
     MainWindow w;
-    QRect screenGeometry = QApplication::desktop()->screenGeometry();
-    int x = (screenGeometry.width()- w.width()) / 2;
-    int y = (screenGeometry.height()-w.height()) / 2;
-    LoginDialog login;
-
+    QObject::connect(&w, static_cast<void (MainWindow::*)(bool)>(&MainWindow::loadFinished), [&w, &splash](bool ok){
+        if(loadSettings() && ok) {
+            w.showFullScreen();
 #ifndef QT_DEBUG
-    splash.finish(&w);
+            splash.finish(&w);
 #endif
+        }
+    });
+
 
     qDebug() << QApplication::applicationDirPath();
-    if(loadSettings())
-        w.show();
+
+//        w.show();
 
 
     return app.exec();

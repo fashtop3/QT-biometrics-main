@@ -28,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(webView, SIGNAL(initCapturing(QString)), this, SLOT(onInitCapturing(QString)));
     connect(this, SIGNAL(doneCapturing(QString,int,QString,QString&)),
             webView, SLOT(onDoneCapturing(QString,int,QString,QString&)));
+    connect(webView, SIGNAL(loadFinished(bool)), this, SIGNAL(loadFinished(bool)));
     setCentralWidget(webView);
 }
 
@@ -61,6 +62,8 @@ void MainWindow::startEnrollment()
 
     /*when next button is clicked*/
     connect(feDialog->nextButtonPtr(), static_cast<void (QPushButton::*)(bool)>(&QPushButton::clicked), [this](){
+
+        feDialog->nextButtonPtr()->setEnabled(0); //disable pusbutton
         /*reset progress bar*/
         feDialog->progressBarPtr()->reset();
         /* Close the Fingerprint Matching and Acuisition context to allow reinitialion in the FVDialod ctor */
@@ -121,8 +124,6 @@ void MainWindow::startEnrollment()
         workerThread.start(); //thread started
         emit startVerification(raw_RegTemplate); //this signal prompts verification process
         feDialog->progressBarPtr()->setVisible(1);
-        feDialog->nextButtonPtr()->setEnabled(0); //disable pusbutton
-
     });
 
     feDialog->exec();

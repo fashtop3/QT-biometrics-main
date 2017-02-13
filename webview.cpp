@@ -6,6 +6,8 @@
 WebView::WebView(QWidget *parent) :
     QWebEngineView(parent)
 {
+    QString bg = "<img src=':/images/emis.png' width='100%' height='100%' />";
+    setHtml(bg);
     // Set up the communications channel
     this->page()->setWebChannel(&channel) ;
     channel.registerObject("widget", this) ;

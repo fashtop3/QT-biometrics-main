@@ -26,7 +26,6 @@ bool loadSettings();
 
 int main(int argc, char *argv[])
 {
-
     RunGuard guard( "JFDBHJ87867SHBJKSD7687EKJ");
         if ( !guard.tryToRun() )
             return 0;
@@ -53,20 +52,38 @@ int main(int argc, char *argv[])
     QPixmap pixmap(":/images/emis.png");
     QSplashScreen splash(pixmap);
     splash.show();
-//    I::sleep(2);
+    I::sleep(2);
     splash.activateWindow();
 #endif
 
+    if(!loadSettings()){
+        QApplication::closeAllWindows();
+        return 0;
+    }
     MainWindow w;
-    QObject::connect(&w, static_cast<void (MainWindow::*)(bool)>(&MainWindow::loadFinished), [&w, &splash](bool ok){
-        if(loadSettings() && ok) {
-            w.showFullScreen();
 #ifndef QT_DEBUG
-            splash.finish(&w);
-#endif
-        }
+    qApp->processEvents();
+    splash.showMessage("Loaded Modules", Qt::AlignLeft|Qt::AlignBottom, Qt::white);
+    QThread::sleep(1);
+
+    QObject::connect(&w, static_cast<void (MainWindow::*)()>(&MainWindow::loadStarted), [&splash](){
+        splash.showMessage("Established connections", Qt::AlignLeft|Qt::AlignBottom, Qt::white);
+        QThread::sleep(2);
     });
 
+    QObject::connect(&w, static_cast<void (MainWindow::*)(int)>(&MainWindow::loadProgress), [&splash](int progress){
+        QThread::sleep(1);
+        splash.showMessage(QString("Loading... %1%").arg(QString::number(progress)), Qt::AlignLeft|Qt::AlignBottom, Qt::white);
+    });
+
+    QObject::connect(&w, static_cast<void (MainWindow::*)(bool)>(&MainWindow::loadFinished), [&w, &splash](bool ok){
+        splash.showMessage(QString("Loaded"), Qt::AlignLeft|Qt::AlignBottom, Qt::white);
+        QThread::sleep(1);
+        w.showMaximized();
+
+        splash.finish(&w);
+    });
+#endif
 
     qDebug() << QApplication::applicationDirPath();
 

@@ -27,10 +27,13 @@ public:
 signals:
     void startVerification(const DATA_BLOB &blob);
     void doneCapturing(const QString cid, int statusCode, const QString statusText, QString &responseData = QString());
+    void loadStarted();
+    void loadProgress(int progress);
     void loadFinished(bool ok);
 
 private slots:
     void onInitCapturing(const QString cid);
+    void onFeaturePermissionRequested(QUrl url, QWebEnginePage::Feature feature);
 
 protected:
     void startEnrollment();

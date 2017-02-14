@@ -24,12 +24,31 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowIcon(QIcon(":/images/logo.png"));
     webView = new WebView(this);
     connect(webView, SIGNAL(initCapturing(QString)), this, SLOT(onInitCapturing(QString)));
     connect(this, SIGNAL(doneCapturing(QString,int,QString,QString&)),
             webView, SLOT(onDoneCapturing(QString,int,QString,QString&)));
+
+    connect(webView, SIGNAL(loadStarted()), this, SIGNAL(loadStarted()));
+    connect(webView, SIGNAL(loadProgress(int)), this, SIGNAL(loadProgress(int)));
     connect(webView, SIGNAL(loadFinished(bool)), this, SIGNAL(loadFinished(bool)));
+
+    connect(webView->page(), SIGNAL(featurePermissionRequested(QUrl,QWebEnginePage::Feature)),
+            this, SLOT(onFeaturePermissionRequested(QUrl,QWebEnginePage::Feature)));
+
+    connect(webView->page(), static_cast<void (QWebEnginePage::*)()>(&QWebEnginePage::loadStarted), [=]() {
+        setStatusTip(QString("Loading..."));
+//        statusBar()->show();
+    });
+
+    connect(webView->page(), static_cast<void (QWebEnginePage::*)(int)>(&QWebEnginePage::loadProgress), [=](int progress) {
+        setStatusTip(QString("Loaded...%1%").arg(QString::number(progress)));
+//        statusBar()->show();
+    });
+
     setCentralWidget(webView);
+    setWindowTitle(tr("SBEMIS 2017.1"));
 }
 
 MainWindow::~MainWindow()
@@ -178,5 +197,10 @@ void MainWindow::onInitCapturing(const QString cid)
        qDebug("An exception occurred. Devive not found. ");
        QMessageBox::critical(0, "Device Error", "An exception occurred. Devive not found. ",
                              QMessageBox::Close | QMessageBox::Escape);
-   }
+    }
+}
+
+void MainWindow::onFeaturePermissionRequested(QUrl url, QWebEnginePage::Feature feature)
+{
+    webView->page()->setFeaturePermission(url, feature, QWebEnginePage::PermissionGrantedByUser);
 }

@@ -33,6 +33,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(webView, SIGNAL(loadStarted()), this, SIGNAL(loadStarted()));
     connect(webView, SIGNAL(loadProgress(int)), this, SIGNAL(loadProgress(int)));
     connect(webView, SIGNAL(loadFinished(bool)), this, SIGNAL(loadFinished(bool)));
+    connect(webView->page(), SIGNAL(featurePermissionRequested(QUrl,QWebEnginePage::Feature)),
+            this, SLOT(onFeaturePermissionRequested(QUrl,QWebEnginePage::Feature)));
 
     setCentralWidget(webView);
     setWindowTitle(tr("SBEMIS 2017.1"));

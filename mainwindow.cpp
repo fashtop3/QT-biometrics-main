@@ -120,13 +120,15 @@ void MainWindow::startEnrollment()
 
 
                 if(reply->isFinished()){
+                    QString statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString();
+                    QString statusText = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
+                    QString rData = reply->readAll().data();
                     if(reply->error()) {
-                        QMessageBox::critical(this, "Network Error", reply->errorString(), QMessageBox::Close);
+                        //NOTE: ouput network eeror here
+//                        QMessageBox::critical(this, "Network Error", reply->errorString(), QMessageBox::Close);
+                        emit doneCapturing(fpJsonObject->value("cid").toString(), statusCode.toInt(), statusText, rData);
                     }
                     else {
-                        QString statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString();
-                        QString statusText = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
-
                         QString rData = reply->readAll().data();
                         emit doneCapturing(fpJsonObject->value("cid").toString(), statusCode.toInt(), statusText, rData);
                     }

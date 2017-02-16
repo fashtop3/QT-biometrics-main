@@ -39,6 +39,9 @@ void WebView::onDoneCapturing(const QString cid, int statusCode, const QString s
 
     page()->runJavaScript(command) ;
 
+    //NOTE: Done capturing run javascript code
+    qDebug() << "Run Javascript: " << command;
+
 #ifdef QT_DEBUG
     QMessageBox::information(this, "Fingerprint enrollment", "Fingerprint capture process completed!!!", QMessageBox::Ok);
 #endif

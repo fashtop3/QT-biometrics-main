@@ -459,7 +459,8 @@ void FEDialog::getRegTemplate(QJsonObject* fpJsonObj) const {
         fpJsonObj->insert("pbdata", QJsonValue::fromVariant(fpTemplate.toBase64(QByteArray::Base64Encoding)));
         fpJsonObj->insert("cbdata", QJsonValue::fromVariant(fpTemplate.size()));
 //QByteArray::KeepTrailingEquals
-        qDebug() << "Enrolling Reg Template in base63: " << fpTemplate.toBase64(QByteArray::Base64Encoding).data();
+        //NOTE: helps to display Enrolling Reg Template in base63
+//        qDebug() << "Enrolling Reg Template in base63: " << fpTemplate.toBase64(QByteArray::Base64Encoding).data();
     }
 }
 
@@ -469,7 +470,8 @@ void FEDialog::getRawRegTemplate(DATA_BLOB& dataBlob) const {
 //        delete [] dataBlob.pbData;
         dataBlob.pbData = {0};
         dataBlob.pbData = NULL;
-        qDebug() << dataBlob.cbData;
+        //NOTE: Checking for data blob
+//        qDebug() << dataBlob.cbData;
         dataBlob.cbData = 0;
 
         // Copy the new template, but only if it has been created.

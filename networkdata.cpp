@@ -27,7 +27,8 @@ NetworkData::NetworkData(QObject *parent) : QObject(parent)
     request.setUrl(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, /*"application/x-www-form-urlencoded"*/ "application/json");
 
-    //                qDebug() << "Posting Data: " << QJsonDocument(*fpJsonObject).toJson().data();
+    //NOTE: Checking data to be posted
+    //qDebug() << "Posting Data: " << QJsonDocument(*fpJsonObject).toJson().data();
 
 #ifdef QT_DEBUG
     //NOTE: this point is used for debug purpose

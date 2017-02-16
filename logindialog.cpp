@@ -41,8 +41,8 @@ void LoginDialog::on_signinPushButton_clicked()
 
     qDebug("reply finished");
 
-    // somehow give reply a value
-    qDebug() << reply->readAll().data();
+    //NOTE: read server response somehow give reply a value
+//    qDebug() << reply->readAll().data();
 
     QList<QByteArray> headerList = reply->rawHeaderList();
     foreach(QByteArray head, headerList) {

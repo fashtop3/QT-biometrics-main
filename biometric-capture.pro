@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui winextras xml webenginewidgets webchannel network
-CONFIG += c++14
+CONFIG += c++14 console
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -31,7 +31,8 @@ SOURCES += main.cpp \
     mainwindow.cpp \
     logindialog.cpp \
     webview.cpp \
-    networkdata.cpp
+    networkdata.cpp \
+    webenginepage.cpp
 
 HEADERS  += \
     evdialog.h \
@@ -46,7 +47,8 @@ HEADERS  += \
     mainwindow.h \
     logindialog.h \
     webview.h \
-    networkdata.h
+    networkdata.h \
+    webenginepage.h
 
 FORMS += \
     evdialog.ui \

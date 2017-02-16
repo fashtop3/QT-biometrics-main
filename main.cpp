@@ -83,6 +83,9 @@ int main(int argc, char *argv[])
 
         splash.finish(&w);
     });
+
+#else
+    w.showMaximized();
 #endif
 
     qDebug() << QApplication::applicationDirPath();

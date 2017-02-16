@@ -3,6 +3,7 @@
 
 #include <QWebEngineView>
 #include <QWebChannel>
+#include "webenginepage.h"
 
 
 class WebView : public QWebEngineView
@@ -25,6 +26,7 @@ private:
     QWebChannel channel;
 
     QWebEngineView logView;
+//    WebEnginePage *page;
 
 };
 

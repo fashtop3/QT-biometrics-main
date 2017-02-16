@@ -2,21 +2,29 @@
 #include "webview.h"
 #include <QMessageBox>
 #include <QSettings>
+#include "webenginepage.h"
 
 WebView::WebView(QWidget *parent) :
     QWebEngineView(parent)
-{
+{/*
     QString bg = "<img src=':/images/emis.png' width='100%' height='100%' />";
-    setHtml(bg);
-    // Set up the communications channel
-    this->page()->setWebChannel(&channel) ;
-    channel.registerObject("widget", this) ;
+    setHtml(bg);*/
 
     QSettings cnf("Dynamic Drive Technology", "DDTFPBiometric");
     cnf.beginGroup("config");
 
+    WebEnginePage *page = new WebEnginePage(this);
+    page->load(QUrl(cnf.value("server/main-url").toString()/*"qrc:/index.html"*//*"http://localhost:8000/"*/));
+    this->setPage(page);
+
+    // Set up the communications channel
+    this->page()->setWebChannel(&channel) ;
+    channel.registerObject("widget", this) ;
+
+
     // Set the page content
-    setUrl(QUrl(cnf.value("server/main-url").toString()/*"qrc:/index.html"*//*"http://localhost:8000/"*/));
+//    setUrl(QUrl(cnf.value("server/main-url").toString()/*"qrc:/index.html"*//*"http://localhost:8000/"*/));
+
 }
 
 WebView::~WebView(){}

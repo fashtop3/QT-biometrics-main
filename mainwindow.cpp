@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setWindowIcon(QIcon(":/images/logo.png"));
+    setWindowIcon(QIcon("://images/favicon.jpg"));
     webView = new WebView(this);
     connect(webView, SIGNAL(initCapturing(QString)), this, SLOT(onInitCapturing(QString)));
     connect(this, SIGNAL(doneCapturing(QString,int,QString,QString&)),
@@ -211,7 +211,7 @@ void MainWindow::onInitCapturing(const QString cid)
    catch (int e)
    {
        qDebug("An exception occurred. Devive not found. ");
-       QMessageBox::critical(0, "Device Error", "An exception occurred. Devive not found. ",
+       QMessageBox::critical(0, "Device Error", "An exception occurred. Device not found. ",
                              QMessageBox::Close | QMessageBox::Escape);
     }
 }

@@ -1,9 +1,9 @@
 <RCC>
     <qresource prefix="/">
-        <file>images/HiRes.gif</file>
         <file>index.html</file>
-        <file>images/emis.jpg</file>
         <file>images/emis.png</file>
         <file>images/logo.png</file>
+        <file>images/favicon.ico</file>
+        <file>images/favicon.jpg</file>
     </qresource>
 </RCC>

@@ -51,8 +51,10 @@ int main(int argc, char *argv[])
 #ifndef QT_DEBUG
     QPixmap pixmap(":/images/emis.png");
     QSplashScreen splash(pixmap);
+    splash.setEnabled(false);
     splash.show();
-    I::sleep(2);
+    QApplication::processEvents();
+//    I::sleep(1);
     splash.activateWindow();
 #endif
 
@@ -64,21 +66,21 @@ int main(int argc, char *argv[])
 #ifndef QT_DEBUG
     qApp->processEvents();
     splash.showMessage("Loaded Modules", Qt::AlignLeft|Qt::AlignBottom, Qt::white);
-    QThread::sleep(1);
+//    QThread::sleep(1);
 
     QObject::connect(&w, static_cast<void (MainWindow::*)()>(&MainWindow::loadStarted), [&splash](){
         splash.showMessage("Established connections", Qt::AlignLeft|Qt::AlignBottom, Qt::white);
-        QThread::sleep(2);
+//        QThread::sleep(1);
     });
 
     QObject::connect(&w, static_cast<void (MainWindow::*)(int)>(&MainWindow::loadProgress), [&splash](int progress){
-        QThread::sleep(1);
+//        QThread::sleep(1);
         splash.showMessage(QString("Loading... %1%").arg(QString::number(progress)), Qt::AlignLeft|Qt::AlignBottom, Qt::white);
     });
 
     QObject::connect(&w, static_cast<void (MainWindow::*)(bool)>(&MainWindow::loadFinished), [&w, &splash](bool ok){
         splash.showMessage(QString("Loaded"), Qt::AlignLeft|Qt::AlignBottom, Qt::white);
-        QThread::sleep(1);
+//        QThread::sleep(1);
         w.showMaximized();
 
         splash.finish(&w);
@@ -106,6 +108,8 @@ bool loadSettings()
                               QMessageBox::Abort);
         return false;
     }
+
+    qDebug() << "Loading config file: "  << file.fileName();
 
     QSettings cnf("Dynamic Drive Technology", "DDTFPBiometric");
     cnf.beginGroup("config");
@@ -136,6 +140,7 @@ bool loadSettings()
                 /* we don't need the element attr so shift the pointer to characters */
                 xml.readNext();
                 cnf.setValue("server/main-url", xml.text().toString());
+                qDebug() << "Loading...: " << cnf.value("server/main-url");
                 continue;
             }
 

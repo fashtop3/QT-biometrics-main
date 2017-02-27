@@ -10,6 +10,7 @@
 #include <QSplashScreen>
 #include <QDesktopWidget>
 #include <QPixmap>
+#include <QWinTaskbarButton>
 
 class I : public QThread
 {
@@ -62,7 +63,14 @@ int main(int argc, char *argv[])
         QApplication::closeAllWindows();
         return 0;
     }
+
+
     MainWindow w;
+
+    QWinTaskbarButton *button = new QWinTaskbarButton(&w);
+    button->setWindow(w.windowHandle());
+    button->setOverlayIcon(QIcon("://images/favicon.jpg"));
+
 #ifndef QT_DEBUG
     qApp->processEvents();
     splash.showMessage("Loaded Modules", Qt::AlignLeft|Qt::AlignBottom, Qt::white);

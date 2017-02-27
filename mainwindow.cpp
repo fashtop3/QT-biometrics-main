@@ -24,7 +24,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setWindowIcon(QIcon("://images/favicon.jpg"));
+
+//    setWindowIcon(QIcon("://images/favicon.jpg"));
     webView = new WebView(this);
     connect(webView, SIGNAL(initCapturing(QString)), this, SLOT(onInitCapturing(QString)));
     connect(this, SIGNAL(doneCapturing(QString,int,QString,QString&)),

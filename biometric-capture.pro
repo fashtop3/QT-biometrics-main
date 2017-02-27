@@ -18,6 +18,7 @@ CONFIG(debug, debug|release) {
 
 TEMPLATE = app
 
+RC_ICONS = favicon.ico
 
 SOURCES += main.cpp \
     evdialog.cpp \

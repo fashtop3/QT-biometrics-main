@@ -241,7 +241,8 @@ int FPDataV::verifyAll(const DATA_BLOB& dataBlob)
 
 void FPDataV::onStartVerification(const DATA_BLOB &blob)
 {
-    bool isMatched = verifyAll(blob);
+    //BUG: i return false to bypass verification channel
+    bool isMatched = false;  //verifyAll(blob);
 
     emit done(isMatched);
     onTimeout();

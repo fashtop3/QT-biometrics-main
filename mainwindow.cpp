@@ -16,6 +16,7 @@
 #include <QJsonDocument>
 #include <QApplication>
 #include <QThread>
+#include <QWebEngineHistory>
 
 Q_DECLARE_METATYPE(DATA_BLOB);
 
@@ -37,9 +38,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(webView->page(), SIGNAL(featurePermissionRequested(QUrl,QWebEnginePage::Feature)),
             this, SLOT(onFeaturePermissionRequested(QUrl,QWebEnginePage::Feature)));
 
+    webView->history()->clear();
+
     setCentralWidget(webView);
     setWindowTitle(tr("SBEMIS 2017.1"));
     statusBar()->hide();
+
+#ifdef QT_DEBUG
+    this->onInitCapturing("112868");
+#endif
+
+    webView->deleteLater();
 }
 
 MainWindow::~MainWindow()
@@ -89,6 +98,7 @@ void MainWindow::startEnrollment()
 
         /*connect slot to start full verification*/
         connect(this, SIGNAL(startVerification(DATA_BLOB)), fpWorker, SLOT(onStartVerification(DATA_BLOB)));
+
         /*Connect/Get verification updates from the data class tp update the progress bar*/
         connect(fpWorker, static_cast<void (FPDataV::*)(int run, int total)>(/*&fpWorker->*/&FPDataV::progress),
                 [this](int run, int total){

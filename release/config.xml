@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <server>
+        <main-url>http://ekiti.sbemis.online/admin/</main-url>
+        <api-url token="HS4uAfbdFojM46vilOoGgEAJdnsy3u2LXWSJUbVfFf7BbwpXL9A8qK2ChAKq">http://localhost:8000/api/data</api-url>
+    </server>
+</config>

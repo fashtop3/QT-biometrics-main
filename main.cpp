@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QCoreApplication::setApplicationName("DDTFPBiometric");
     QCoreApplication::setOrganizationName("Dynamic Drive Technology");
-    QCoreApplication::setApplicationVersion("1.0");
+    QCoreApplication::setApplicationVersion("1.1");
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Student Biometric capturing application");

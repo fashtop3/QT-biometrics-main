@@ -1,8 +1,10 @@
 #include "fedialog.h"
 #include "webview.h"
+#include <QJsonDocument>
 #include <QMessageBox>
 #include <QSettings>
 #include "webenginepage.h"
+#include <QWebEngineProfile>
 
 WebView::WebView(QWidget *parent) :
     QWebEngineView(parent)
@@ -14,13 +16,15 @@ WebView::WebView(QWidget *parent) :
     cnf.beginGroup("config");
 
     WebEnginePage *page = new WebEnginePage(this);
+//    page->profile()->setHttpCacheType(QWebEngineProfile::NoCache);
+
+    page->profile()->clearHttpCache();
     page->load(QUrl(cnf.value("server/main-url").toString()/*"qrc:/index.html"*//*"http://localhost:8000/"*/));
     this->setPage(page);
 
     // Set up the communications channel
     this->page()->setWebChannel(&channel) ;
     channel.registerObject("widget", this) ;
-
 
     // Set the page content
 //    setUrl(QUrl(cnf.value("server/main-url").toString()/*"qrc:/index.html"*//*"http://localhost:8000/"*/));
@@ -29,20 +33,21 @@ WebView::WebView(QWidget *parent) :
 
 WebView::~WebView(){}
 
-void WebView::onDoneCapturing(const QString cid, int statusCode, const QString statusText, QString &data)
+void WebView::onDoneCapturing(int statusCode, const QString statusText, QJsonObject &data)
 {
-     QString command = QString("doneCapturing('%1', '%2', '%3', '%4');")
-             .arg(cid)
+    QJsonDocument doc(data);
+    QString strJson(doc.toJson(QJsonDocument::Compact));
+     QString command = QString("doneCapturing('%1', '%2', '%3');")
              .arg(QString::number(statusCode))
              .arg(statusText)
-             .arg(data);
+             .arg(strJson);
 
     page()->runJavaScript(command) ;
 
     //NOTE: Done capturing run javascript code
-    qDebug() << "Run Javascript: " << command;
 
 #ifdef QT_DEBUG
+    qDebug() << "Run Javascript: " << command;
     QMessageBox::information(this, "Fingerprint enrollment", "Fingerprint capture process completed!!!", QMessageBox::Ok);
 #endif
 

@@ -11,9 +11,9 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 
 CONFIG(debug, debug|release) {
-    TARGET = ../../biometric-installer/packages/com.main.product/data/DDTFPBiometric
-} else {
     TARGET = DDTFPBiometric
+} else {
+    TARGET = ../../biometric-installer/packages/com.main.product/data/DDTFPBiometric
 }
 
 TEMPLATE = app

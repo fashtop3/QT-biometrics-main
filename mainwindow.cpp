@@ -17,6 +17,7 @@
 #include <QApplication>
 #include <QThread>
 #include <QWebEngineHistory>
+#include <QWebEngineProfile>
 
 Q_DECLARE_METATYPE(DATA_BLOB);
 
@@ -28,17 +29,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 //    setWindowIcon(QIcon("://images/favicon.jpg"));
     webView = new WebView(this);
+//    webView->history()->clear();
     connect(webView, SIGNAL(initCapturing(QString)), this, SLOT(onInitCapturing(QString)));
-    connect(this, SIGNAL(doneCapturing(QString,int,QString,QString&)),
-            webView, SLOT(onDoneCapturing(QString,int,QString,QString&)));
+    connect(this, SIGNAL(doneCapturing(int,QString,QJsonObject&)),
+            webView, SLOT(onDoneCapturing(int,QString,QJsonObject&)));
 
     connect(webView, SIGNAL(loadStarted()), this, SIGNAL(loadStarted()));
     connect(webView, SIGNAL(loadProgress(int)), this, SIGNAL(loadProgress(int)));
     connect(webView, SIGNAL(loadFinished(bool)), this, SIGNAL(loadFinished(bool)));
     connect(webView->page(), SIGNAL(featurePermissionRequested(QUrl,QWebEnginePage::Feature)),
             this, SLOT(onFeaturePermissionRequested(QUrl,QWebEnginePage::Feature)));
-
-    webView->history()->clear();
 
     setCentralWidget(webView);
     setWindowTitle(tr("SBEMIS 2017.1"));
@@ -47,8 +47,6 @@ MainWindow::MainWindow(QWidget *parent) :
 #ifdef QT_DEBUG
     this->onInitCapturing("112868");
 #endif
-
-    webView->deleteLater();
 }
 
 MainWindow::~MainWindow()
@@ -115,7 +113,7 @@ void MainWindow::startEnrollment()
                 QMessageBox::critical(this, "Fingerprint Verification", "Fingerpint match found!!! unable to proceed!.",
                                       QMessageBox::Close);
                 feDialog->done(QDialog::Rejected);
-                emit doneCapturing(fpJsonObject->value("cid").toString(), 400, "Fingerpint match found!!! unable to proceed!");
+                emit doneCapturing(400, "Fingerpint match found!!! unable to proceed!");
             }
             else{
 
@@ -125,39 +123,37 @@ void MainWindow::startEnrollment()
                 /**
                  * @brief reply get server response
                  */
-                NetworkData networkData(this);
-                QNetworkReply *reply = networkData.postData(*fpJsonObject);
-                reply->ignoreSslErrors();
+//NOTE: I disabled this line from posting data to api.biometric.io
+//                NetworkData networkData(this);
+//                QNetworkReply *reply = networkData.postData(*fpJsonObject);
+//                reply->ignoreSslErrors();
 
 
-                if(reply->isFinished()){
-                    QString statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString();
-                    QString statusText = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
-                    QString rData = reply->readAll().data();
-                    if(reply->error()) {
-                        //NOTE: ouput network eeror here
-//                        QMessageBox::critical(this, "Network Error", reply->errorString(), QMessageBox::Close);
-                        emit doneCapturing(fpJsonObject->value("cid").toString(), statusCode.toInt(), statusText, rData);
-                    }
-                    else {
-                        QString rData = reply->readAll().data();
-                        emit doneCapturing(fpJsonObject->value("cid").toString(), statusCode.toInt(), statusText, rData);
-                    }
-                }
-
+//                if(reply->isFinished()){
+//                    QString statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString();
+//                    QString statusText = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
+//                    QString rData = reply->readAll().data();
+//                    if(reply->error()) {
+//                        //NOTE: ouput network eeror here
+////                        QMessageBox::critical(this, "Network Error", reply->errorString(), QMessageBox::Close);
+//                        emit doneCapturing(statusCode.toInt(), statusText, rData);
+//                    }
+//                    else {
+//                        QString rData = reply->readAll().data();
+//                        emit doneCapturing(statusCode.toInt(), statusText, rData);
+//                    }
+//                }
 //                QEventLoop loop;
 //                connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
 //                        [this](QNetworkReply::NetworkError code){
-
 //                });
-
 //                connect(reply, static_cast<void(QNetworkReply::*)()>(&QNetworkReply::finishedn),
 //                        [this](){
 //                    QMessageBox::critical(this, "Network Error", code.errorString(), QMessageBox::Close);
 //                });
-
-
 //                loop.exec();
+
+                emit doneCapturing(200, "Completed", *fpJsonObject);
                 feDialog->close();
             }
 

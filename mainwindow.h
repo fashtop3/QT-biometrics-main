@@ -26,7 +26,7 @@ public:
 
 signals:
     void startVerification(const DATA_BLOB &blob);
-    void doneCapturing(const QString cid, int statusCode, const QString statusText, QString &responseData = QString());
+    void doneCapturing(int statusCode, const QString statusText, QJsonObject &responseData = QJsonObject());
     void loadStarted();
     void loadProgress(int progress);
     void loadFinished(bool ok);
